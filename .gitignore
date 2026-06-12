@@ -1,0 +1,43 @@
+# Python
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+
+venv/
+env/
+.venv/
+
+# Django
+
+db.sqlite3
+media/
+staticfiles/
+
+# Environment variables
+
+.env
+
+# IDE
+
+.vscode/
+.idea/
+
+# OS
+
+.DS_Store
+Thumbs.db
+
+# Logs
+
+*.log
+
+# Pytest
+
+.pytest_cache/
+
+# Migrations cache
+
+*.pyc
