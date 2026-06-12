@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.get_meta_title }}{% endblock %}
+{% block meta_description %}{{ lesson.get_meta_description }}{% endblock %}
+{% block og_title %}{{ lesson.get_meta_title }}{% endblock %}
+{% block og_description %}{{ lesson.get_meta_description|truncatechars:150 }}{% endblock %}
+{% block og_type %}article{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ lesson.title|escapejs }}",
+  "description": "{{ lesson.summary|truncatechars:150|escapejs }}",
+  "author": {"@type": "Organization", "name": "Learnova"},
+  "publisher": {"@type": "Organization", "name": "Learnova"},
+  "dateModified": "{{ lesson.updated_at|date:'Y-m-d' }}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Topics", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}"},
+      {"@type": "ListItem", "position": 2, "name": "{{ topic.title|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{{ topic.get_absolute_url }}"},
+      {"@type": "ListItem", "position": 3, "name": "{{ chapter.title|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{{ chapter.get_absolute_url }}"},
+      {"@type": "ListItem", "position": 4, "name": "{{ lesson.title|escapejs }}"}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .reading-progress { display: block !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header page-header-sm">
+  <div class="container">
+    {% include 'partials/_breadcrumbs.html' %}
+  </div>
+</div>
+
+<section class="section section-lesson">
+  <div class="container">
+    <div class="lesson-detail-layout">
+
+      <!-- Left Sidebar: Topic Structure -->
+      <aside class="sidebar sidebar-left sidebar-sticky" aria-label="Topic structure">
+        <div class="sidebar-card">
+          <h2 class="sidebar-title"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> {{ topic.title }}</h2>
+          <nav class="topic-structure" aria-label="Chapters and lessons">
+            {% for ch in all_chapters %}
+              <div class="structure-chapter">
+                <a href="{{ ch.get_absolute_url }}" class="structure-chapter-link {% if ch.id == chapter.id %}structure-chapter-active{% endif %}" {% if ch.id == chapter.id %}aria-current="true"{% endif %}>
+                  <i class="fa-solid fa-layer-group" aria-hidden="true"></i> {{ ch.title }}
+                </a>
+                {% if ch.id == chapter.id %}
+                  <ul class="structure-lessons">
+                    {% for l in ch.lessons.all %}
+                      <li class="structure-lesson {% if l.id == lesson.id %}structure-lesson-active{% endif %}">
+                        <a href="{{ l.get_absolute_url }}" {% if l.id == lesson.id %}aria-current="page"{% endif %}>
+                          <i class="fa-solid fa-{% if l.id == lesson.id %}circle-dot{% else %}circle{% endif %}" aria-hidden="true"></i> {{ l.title }}
+                        </a>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <article class="lesson-detail-main">
+        <header class="lesson-header">
+          <div class="lesson-meta-top">
+            <a href="{{ topic.get_absolute_url }}" class="topic-badge">{{ topic.title }}</a>
+            <a href="{{ chapter.get_absolute_url }}" class="chapter-badge">{{ chapter.title }}</a>
+            <span class="difficulty-badge {{ lesson.difficulty_class }}">
+              <i class="fa-solid fa-signal" aria-hidden="true"></i> {{ lesson.difficulty_label }}
+            </span>
+            <span class="reading-time-badge"><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ lesson.reading_time }} min read</span>
+            {% if lesson_total > 1 %}
+              <span class="lesson-position-badge">Lesson {{ lesson_position }} of {{ lesson_total }}</span>
+            {% endif %}
+          </div>
+          <h1>{{ lesson.title }}</h1>
+          <p class="lesson-summary">{{ lesson.summary }}</p>
+        </header>
+
+        {% if lesson.video_url %}
+          <div class="lesson-video-container">
+            <iframe src="{{ lesson.video_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+        {% endif %}
+
+        {% if lesson.content %}
+          <div class="lesson-content prose" id="lessonContent">
+            {{ lesson.content|safe }}
+          </div>
+        {% else %}
+          <div class="content-placeholder">
+            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            <p>Lesson content is being prepared. Check back soon!</p>
+          </div>
+        {% endif %}
+
+        <!-- Prev / Next Navigation -->
+        <nav class="lesson-navigation" aria-label="Lesson navigation">
+          <div class="lesson-nav-prev">
+            {% if prev_lesson %}
+              <a href="{{ prev_lesson.get_absolute_url }}" class="lesson-nav-link" rel="prev">
+                <div class="nav-direction"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Previous</div>
+                <div class="nav-title">{{ prev_lesson.title }}</div>
+              </a>
+            {% endif %}
+          </div>
+          <div class="lesson-nav-next">
+            {% if next_lesson %}
+              <a href="{{ next_lesson.get_absolute_url }}" class="lesson-nav-link lesson-nav-link-next" rel="next">
+                <div class="nav-direction">Next <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+                <div class="nav-title">{{ next_lesson.title }}</div>
+              </a>
+            {% endif %}
+          </div>
+        </nav>
+      </article>
+
+      <!-- Right Sidebar: TOC + Chapter Lessons -->
+      <aside class="sidebar sidebar-right sidebar-sticky" aria-label="Page navigation">
+        <div class="sidebar-card" id="tocSidebar">
+          <h2 class="sidebar-title"><i class="fa-solid fa-list" aria-hidden="true"></i> On This Page</h2>
+          <ul class="toc-list" id="tocList" aria-label="Table of contents">
+            <li><span class="toc-loading">Loading…</span></li>
+          </ul>
+        </div>
+
+        <div class="sidebar-card">
+          <h2 class="sidebar-title"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> Chapter Lessons</h2>
+          <ul class="quick-nav" aria-label="Lessons in this chapter">
+            {% for l in chapter_lessons %}
+              <li>
+                <a href="{{ l.get_absolute_url }}" {% if l.id == lesson.id %}aria-current="page"{% endif %} class="{% if l.id == lesson.id %}quick-nav-active{% endif %}">
+                  <i class="fa-solid fa-{% if l.id == lesson.id %}circle-dot{% else %}circle{% endif %}" aria-hidden="true"></i>
+                  {{ l.title }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    // Build table of contents from lesson headings
+    document.addEventListener('DOMContentLoaded', function () {
+      const content = document.getElementById('lessonContent');
+      const tocList = document.getElementById('tocList');
+      if (!content || !tocList) return;
+      const headings = content.querySelectorAll('h2, h3');
+      if (!headings.length) {
+        tocList.innerHTML = '<li><span class="toc-empty">No sections found</span></li>';
+        return;
+      }
+      tocList.innerHTML = '';
+      headings.forEach(function (h, i) {
+        if (!h.id) h.id = 'section-' + i;
+        const li = document.createElement('li');
+        li.className = h.tagName === 'H3' ? 'toc-sub' : '';
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+    });
+  })();
+</script>
+{% endblock %}

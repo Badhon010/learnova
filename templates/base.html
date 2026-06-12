@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block meta_description %}Learnova — Learn. Build. Grow. A modern learning platform for developers.{% endblock %}" />
+  <meta name="robots" content="index, follow" />
+
+  {% block canonical %}{% endblock %}
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{% block og_title %}Learnova{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Learn. Build. Grow. A modern learning platform for developers.{% endblock %}" />
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+  <meta property="og:site_name" content="Learnova" />
+  {% block og_url %}<meta property="og:url" content="{{ request.build_absolute_uri }}" />{% endblock %}
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{% block twitter_title %}Learnova{% endblock %}" />
+  <meta name="twitter:description" content="{% block twitter_description %}Learn. Build. Grow.{% endblock %}" />
+
+  <title>{% block title %}Learnova — Learn. Build. Grow.{% endblock %}</title>
+
+  {% load static %}
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'fa/css/all.min.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+  {% block extra_head %}{% endblock %}
+
+  {% block json_ld %}{% endblock %}
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div class="reading-progress" id="readingProgress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+  {% include 'partials/_navbar.html' %}
+
+  <main id="main-content" tabindex="-1">
+    {% if messages %}
+      <div class="messages-container" role="alert" aria-live="polite">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'partials/_footer.html' %}
+
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

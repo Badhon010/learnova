@@ -1,0 +1,39 @@
+{% load static %}
+<header class="navbar" id="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+
+      <a href="{% url 'home' %}" class="navbar-brand" aria-label="Learnova home">
+        <div class="brand-icon">
+          <img src="{% static 'img/logo.png' %}" alt="Learnova Logo">
+        </div>
+        <span class="brand-name">Learnova</span>
+      </a>
+
+      <nav class="navbar-nav" id="navbarNav" aria-label="Main navigation">
+        <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+        <a href="{% url 'topics' %}" class="nav-link {% if 'topic' in request.resolver_match.url_name or 'chapter' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name %}active{% endif %}">Topics</a>
+        <a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
+        <a href="{% url 'contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
+      </nav>
+
+      <div class="navbar-actions">
+        <form class="navbar-search" action="{% url 'topics' %}" method="get" role="search">
+          <input type="search" name="search" placeholder="Search topics..." class="search-input" aria-label="Search" />
+          <button type="submit" class="search-btn" aria-label="Submit search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </form>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</header>

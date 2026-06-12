@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Learnova — Learn. Build. Grow.{% endblock %}
+{% block meta_description %}Learnova is a modern learning platform for developers. Browse topics, chapters, and lessons to master Python, JavaScript, React, SQL, and more.{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Learnova",
+  "url": "{{ request.scheme }}://{{ request.get_host }}",
+  "description": "A modern learning platform for developers. Master programming through structured topics, chapters, and lessons.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}?search={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <span class="hero-badge"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Free to learn</span>
+      <h1 class="hero-title">Learn. Build. <span class="text-primary">Grow.</span></h1>
+      <p class="hero-subtitle">Master programming through structured topics, hands-on chapters, and real code examples. Built for developers who want to level up.</p>
+      <form class="hero-search" action="{% url 'topics' %}" method="get" role="search">
+        <div class="search-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+          <input type="search" name="search" placeholder="Search topics, lessons..." class="hero-search-input" aria-label="Search topics and lessons" />
+          <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+      </form>
+      <div class="hero-stats" aria-label="Platform statistics">
+        <div class="stat-item">
+          <span class="stat-number">{{ topic_count }}+</span>
+          <span class="stat-label">Topics</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-number">{{ lesson_count }}+</span>
+          <span class="stat-label">Lessons</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-number">{{ subscriber_count }}+</span>
+          <span class="stat-label">Subscribers</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Topics -->
+<section class="section section-topics" aria-labelledby="topics-heading">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" id="topics-heading">Explore Topics</h2>
+      <p class="section-subtitle">Structured learning paths covering the tools and technologies that matter.</p>
+      <a href="{% url 'topics' %}" class="btn btn-outline">View All Topics <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    {% if featured_topics %}
+      <div class="topics-grid">
+        {% for topic in featured_topics %}
+          <a href="{{ topic.get_absolute_url }}" class="topic-card">
+            <div class="topic-card-icon" aria-hidden="true">
+              {{ topic.icon_html|safe }}
+            </div>
+            <div class="topic-card-body">
+              <h3 class="topic-card-title">{{ topic.title }}</h3>
+              <p class="topic-card-desc">{{ topic.description|truncatechars:90 }}</p>
+              <div class="topic-card-meta">
+                <span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> {{ topic.num_chapters }} chapter{{ topic.num_chapters|pluralize }}</span>
+                <span><i class="fa-solid fa-file-lines" aria-hidden="true"></i> {{ topic.num_lessons }} lesson{{ topic.num_lessons|pluralize }}</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fa-solid fa-books empty-icon" aria-hidden="true"></i>
+        <p>Topics are coming soon. Check back later!</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Popular Lessons -->
+<section class="section section-lessons bg-surface" aria-labelledby="lessons-heading">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" id="lessons-heading">Popular Lessons</h2>
+      <p class="section-subtitle">Start with some of our most-read lessons across all topics.</p>
+    </div>
+    {% if popular_lessons %}
+      <div class="lessons-list">
+        {% for lesson in popular_lessons %}
+          <a href="{{ lesson.get_absolute_url }}" class="lesson-card">
+            <div class="lesson-card-icon" aria-hidden="true">
+              <i class="fa-solid fa-file-code"></i>
+            </div>
+            <div class="lesson-card-body">
+              <div class="lesson-card-meta-top">
+                <span class="lesson-topic-badge">{{ lesson.chapter.topic.title }}</span>
+                <span class="difficulty-badge {{ lesson.difficulty_class }}">{{ lesson.difficulty_label }}</span>
+                <span class="lesson-reading-time"><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ lesson.reading_time }} min</span>
+              </div>
+              <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+              <p class="lesson-card-summary">{{ lesson.summary|truncatechars:120 }}</p>
+            </div>
+            <div class="lesson-card-arrow" aria-hidden="true">
+              <i class="fa-solid fa-chevron-right"></i>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fa-solid fa-book-open empty-icon" aria-hidden="true"></i>
+        <p>Lessons are coming soon!</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Why Learnova -->
+<section class="section section-why" aria-labelledby="why-heading">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" id="why-heading">Why Learnova?</h2>
+      <p class="section-subtitle">Everything you need to go from beginner to confident developer.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true"><i class="fa-solid fa-sitemap"></i></div>
+        <h3>Structured Learning</h3>
+        <p>Content organized into clear topics, chapters, and lessons. No guessing where to start or what comes next.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true"><i class="fa-solid fa-code"></i></div>
+        <h3>Real Code Examples</h3>
+        <p>Every lesson includes practical, copyable code examples with explanations. Learn by reading and doing.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></div>
+        <h3>Fast & Focused</h3>
+        <p>No fluff, no filler. Each lesson is concise, well-written, and designed to respect your time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true"><i class="fa-solid fa-mobile-screen"></i></div>
+        <h3>Read Anywhere</h3>
+        <p>Fully responsive and optimized for every device. Learn on your laptop, tablet, or phone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section section-process bg-surface" aria-labelledby="process-heading">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" id="process-heading">How It Works</h2>
+      <p class="section-subtitle">A simple, effective path to mastering new skills.</p>
+    </div>
+    <div class="process-steps">
+      <div class="process-step">
+        <div class="step-number" aria-hidden="true">01</div>
+        <h3 class="step-title">Choose a Topic</h3>
+        <p class="step-desc">Browse our topic library and pick the language or skill you want to master.</p>
+      </div>
+      <div class="process-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="process-step">
+        <div class="step-number" aria-hidden="true">02</div>
+        <h3 class="step-title">Follow Chapters</h3>
+        <p class="step-desc">Each topic is broken into chapters that build on each other progressively.</p>
+      </div>
+      <div class="process-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="process-step">
+        <div class="step-number" aria-hidden="true">03</div>
+        <h3 class="step-title">Read Lessons</h3>
+        <p class="step-desc">Focused, example-rich lessons you can complete in one sitting.</p>
+      </div>
+      <div class="process-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="process-step">
+        <div class="step-number" aria-hidden="true">04</div>
+        <h3 class="step-title">Practice Code</h3>
+        <p class="step-desc">Copy and run the code examples to reinforce what you've learned.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<section class="section-newsletter" aria-labelledby="newsletter-heading">
+  <div class="container">
+    <div class="newsletter-box">
+      <div class="newsletter-content">
+        <h2 id="newsletter-heading">Stay in the loop</h2>
+        <p>Get new tutorials, code examples, and learning resources delivered to your inbox every week.</p>
+      </div>
+      <form class="newsletter-inline" id="homeNewsletterForm" novalidate aria-label="Newsletter subscription">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Enter your email address" class="newsletter-input" aria-label="Email address" required />
+        <button type="submit" class="btn btn-primary">Subscribe <i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+      </form>
+      <p class="newsletter-feedback" id="homeNewsletterMsg" style="display:none;margin-top:0.6rem;font-size:0.9rem;" role="alert" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function(){
+  const form = document.getElementById('homeNewsletterForm');
+  const msg  = document.getElementById('homeNewsletterMsg');
+  if (!form) return;
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const email = form.querySelector('input[type="email"]').value.trim();
+    const btn   = form.querySelector('button[type="submit"]');
+    if (!email) return;
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subscribing…';
+    try {
+      const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+      const res = await fetch('{% url "newsletter_subscribe" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({email}),
+      });
+      const data = await res.json();
+      msg.style.display = 'block';
+      if (data.ok) {
+        msg.style.color = 'var(--primary)';
+        msg.textContent = data.already
+          ? 'You are already subscribed. Thank you!'
+          : '✓ Subscribed! Check your inbox for a welcome email.';
+        form.querySelector('input[type="email"]').value = '';
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Subscribed!';
+      } else {
+        msg.style.color = '#ef4444';
+        msg.textContent = data.error || 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    } catch(err) {
+      msg.style.display = 'block';
+      msg.style.color = '#ef4444';
+      msg.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+})();
+</script>
+{% endblock %}

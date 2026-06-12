@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Topics | Learnova{% endblock %}
+{% block meta_description %}Browse all learning topics on Learnova. Find structured courses on Python, JavaScript, SQL, React, Git, and more.{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <div class="container">
+    <h1>All Topics</h1>
+    <p>{{ total_count }} topic{{ total_count|pluralize }} available — pick where you want to start.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <!-- Search + Filter Bar -->
+    <div class="topics-toolbar">
+      <form class="topics-search-form" method="get" action="{% url 'topics' %}" role="search">
+        <div class="search-field">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input
+            type="search"
+            name="search"
+            value="{{ search }}"
+            placeholder="Search topics..."
+            class="form-input"
+            aria-label="Search topics"
+          />
+        </div>
+        {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}" />{% endif %}
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search or difficulty %}
+          <a href="{% url 'topics' %}" class="btn btn-outline">Clear</a>
+        {% endif %}
+      </form>
+      <div class="filter-placeholder" role="group" aria-label="Filter by difficulty">
+        <span class="filter-label">Filter:</span>
+        <a href="{% url 'topics' %}{% if search %}?search={{ search }}{% endif %}" class="filter-btn {% if not difficulty %}active{% endif %}">All</a>
+        <a href="?difficulty=beginner{% if search %}&search={{ search }}{% endif %}" class="filter-btn {% if difficulty == 'beginner' %}active{% endif %}">Beginner</a>
+        <a href="?difficulty=intermediate{% if search %}&search={{ search }}{% endif %}" class="filter-btn {% if difficulty == 'intermediate' %}active{% endif %}">Intermediate</a>
+        <a href="?difficulty=advanced{% if search %}&search={{ search }}{% endif %}" class="filter-btn {% if difficulty == 'advanced' %}active{% endif %}">Advanced</a>
+      </div>
+    </div>
+
+    {% if search or difficulty %}
+      <p class="search-result-info">
+        {% if topics %}
+          Showing {{ topics|length }} result{{ topics|length|pluralize }}
+          {% if search %} for "<strong>{{ search }}</strong>"{% endif %}
+          {% if difficulty %} filtered by <strong>{{ difficulty }}</strong>{% endif %}
+        {% else %}
+          No topics found{% if search %} for "<strong>{{ search }}</strong>"{% endif %}{% if difficulty %} with difficulty <strong>{{ difficulty }}</strong>{% endif %}.
+        {% endif %}
+      </p>
+    {% endif %}
+
+    {% if topics %}
+      <div class="topics-grid topics-grid-full">
+        {% for topic in topics %}
+          <a href="{{ topic.get_absolute_url }}" class="topic-card">
+            <div class="topic-card-icon" aria-hidden="true">
+              {{ topic.icon_html|safe }}
+            </div>
+            <div class="topic-card-body">
+              <h2 class="topic-card-title">{{ topic.title }}</h2>
+              <p class="topic-card-desc">{{ topic.description|truncatechars:100 }}</p>
+              <div class="topic-card-meta">
+                <span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> {{ topic.num_chapters }} chapter{{ topic.num_chapters|pluralize }}</span>
+                <span><i class="fa-solid fa-file-lines" aria-hidden="true"></i> {{ topic.num_lessons }} lesson{{ topic.num_lessons|pluralize }}</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <nav class="pagination-nav" aria-label="Topic pages">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}" class="page-link">
+                  <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Prev
+                </a>
+              </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              <li>
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}" class="page-link {% if num == page_obj.number %}active{% endif %}" {% if num == page_obj.number %}aria-current="page"{% endif %}>{{ num }}</a>
+              </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li>
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}" class="page-link">
+                  Next <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state empty-state-large">
+        <i class="fa-solid fa-magnifying-glass empty-icon" aria-hidden="true"></i>
+        <h2>No Topics Found</h2>
+        <p>{% if search %}No topics match your search. Try different keywords.{% else %}Topics are being added. Check back soon!{% endif %}</p>
+        <a href="{% url 'topics' %}" class="btn btn-primary">Browse All Topics</a>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

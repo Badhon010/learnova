@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ topic.get_meta_title }}{% endblock %}
+{% block meta_description %}{{ topic.get_meta_description }}{% endblock %}
+{% block og_title %}{{ topic.get_meta_title }}{% endblock %}
+{% block og_description %}{{ topic.get_meta_description|truncatechars:150 }}{% endblock %}
+{% if topic.image %}
+{% block og_image %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ topic.image.url }}" />{% endblock %}
+{% endif %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ topic.title|escapejs }}",
+  "description": "{{ topic.description|truncatechars:150|escapejs }}",
+  "provider": {"@type": "Organization", "name": "Learnova"},
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Topics", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}"},
+      {"@type": "ListItem", "position": 2, "name": "{{ topic.title|escapejs }}"}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header page-header-sm">
+  <div class="container">
+    {% include 'partials/_breadcrumbs.html' %}
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="topic-detail-layout">
+
+      <!-- Left Sidebar: Chapter List -->
+      <aside class="sidebar sidebar-left sidebar-sticky" aria-label="Chapters">
+        <div class="sidebar-card">
+          <h2 class="sidebar-title">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i> Chapters
+          </h2>
+          {% if chapters %}
+            <ol class="chapter-list">
+              {% for chapter in chapters %}
+                <li class="chapter-list-item">
+                  <a href="{{ chapter.get_absolute_url }}" class="chapter-list-link">
+                    <div class="chapter-list-order">{{ chapter.order }}</div>
+                    <div class="chapter-list-info">
+                      <span class="chapter-list-title">{{ chapter.title }}</span>
+                      <span class="chapter-list-count">{{ chapter.num_lessons }} lesson{{ chapter.num_lessons|pluralize }}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right chapter-list-arrow" aria-hidden="true"></i>
+                  </a>
+                </li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <p class="sidebar-empty">No chapters yet.</p>
+          {% endif %}
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="topic-detail-main">
+        <div class="topic-header">
+          {% if topic.image %}
+            <div class="topic-cover-image">
+              <img src="{{ topic.image.url }}" alt="{% if topic.image_alt %}{{ topic.image_alt }}{% else %}{{ topic.title }} cover image{% endif %}" />
+            </div>
+          {% endif %}
+          <div class="topic-icon-large" aria-hidden="true">
+            {{ topic.icon_html|safe }}
+          </div>
+          <div>
+            <h1 class="topic-title">{{ topic.title }}</h1>
+            <div class="topic-stats-row">
+              <span class="stat-badge"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> {{ topic.num_chapters }} chapter{{ topic.num_chapters|pluralize }}</span>
+              <span class="stat-badge"><i class="fa-solid fa-file-lines" aria-hidden="true"></i> {{ topic.num_lessons }} lesson{{ topic.num_lessons|pluralize }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="topic-description">{{ topic.description }}</p>
+
+        {% if chapters %}
+          <h2 class="section-subheading">What You'll Learn</h2>
+          <div class="chapter-cards">
+            {% for chapter in chapters %}
+              <a href="{{ chapter.get_absolute_url }}" class="chapter-card">
+                <div class="chapter-card-order">{{ chapter.order }}</div>
+                <div class="chapter-card-body">
+                  <h3 class="chapter-card-title">{{ chapter.title }}</h3>
+                  <p class="chapter-card-desc">{{ chapter.description|truncatechars:120 }}</p>
+                  <span class="chapter-card-lessons">
+                    <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+                    {{ chapter.num_lessons }} lesson{{ chapter.num_lessons|pluralize }}
+                  </span>
+                </div>
+                <i class="fa-solid fa-arrow-right chapter-card-arrow" aria-hidden="true"></i>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </main>
+
+      <!-- Right Sidebar: Quick Nav -->
+      <aside class="sidebar sidebar-right sidebar-sticky" aria-label="Quick navigation">
+        <div class="sidebar-card">
+          <h2 class="sidebar-title"><i class="fa-solid fa-compass" aria-hidden="true"></i> Quick Navigation</h2>
+          <ul class="quick-nav" aria-label="Navigation links">
+            <li><a href="{% url 'topics' %}"><i class="fa-solid fa-grid-2" aria-hidden="true"></i> All Topics</a></li>
+            {% if chapters %}
+              <li class="quick-nav-divider">Chapters</li>
+              {% for chapter in chapters %}
+                <li><a href="{{ chapter.get_absolute_url }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i> {{ chapter.title }}</a></li>
+              {% endfor %}
+            {% endif %}
+          </ul>
+        </div>
+
+        <div class="sidebar-card sidebar-card-highlight">
+          <h3><i class="fa-solid fa-rocket" aria-hidden="true"></i> Ready to start?</h3>
+          {% if chapters %}
+            <a href="{{ chapters.0.get_absolute_url }}" class="btn btn-primary btn-full">Begin Chapter 1</a>
+          {% else %}
+            <p>Chapters coming soon.</p>
+          {% endif %}
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

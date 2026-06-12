@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Contact | Learnova{% endblock %}
+{% block meta_description %}Get in touch with the Learnova team. We'd love to hear from you.{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <h1>Contact Us</h1>
+    <p>Have a question, suggestion, or just want to say hello? We'd love to hear from you.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+
+      <div class="contact-form-col">
+        {% if success %}
+          <div class="alert alert-success">
+            <i class="fa-solid fa-circle-check"></i>
+            Thank you! Your message has been received. We'll get back to you soon.
+          </div>
+        {% endif %}
+
+        <div class="form-card">
+          <h2>Send a Message</h2>
+          <form method="post" action="{% url 'contact' %}" class="contact-form" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="id_name" class="form-label">Full Name <span class="required">*</span></label>
+              <input type="text" id="id_name" name="name" value="{{ form.name.value|default:'' }}" class="form-input {% if form.name.errors %}form-input-error{% endif %}" placeholder="Your name" required />
+              {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label for="id_email" class="form-label">Email Address <span class="required">*</span></label>
+              <input type="email" id="id_email" name="email" value="{{ form.email.value|default:'' }}" class="form-input {% if form.email.errors %}form-input-error{% endif %}" placeholder="your@email.com" required />
+              {% if form.email.errors %}<span class="form-error">{{ form.email.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label for="id_subject" class="form-label">Subject <span class="required">*</span></label>
+              <input type="text" id="id_subject" name="subject" value="{{ form.subject.value|default:'' }}" class="form-input {% if form.subject.errors %}form-input-error{% endif %}" placeholder="How can we help?" required />
+              {% if form.subject.errors %}<span class="form-error">{{ form.subject.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label for="id_message" class="form-label">Message <span class="required">*</span></label>
+              <textarea id="id_message" name="message" rows="5" class="form-input form-textarea {% if form.message.errors %}form-input-error{% endif %}" placeholder="Your message..." required>{{ form.message.value|default:'' }}</textarea>
+              {% if form.message.errors %}<span class="form-error">{{ form.message.errors.0 }}</span>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+          </form>
+        </div>
+      </div>
+
+      <div class="contact-info-col">
+        <div class="contact-info-card">
+          <h2>Get in Touch</h2>
+          <p>We typically respond within 24-48 hours on business days.</p>
+          <ul class="contact-info-list">
+            <li>
+              <div class="contact-info-icon"><i class="fa-solid fa-envelope"></i></div>
+              <div>
+                <strong>Email</strong>
+                <span>hello@learnova.dev</span>
+              </div>
+            </li>
+            <li>
+              <div class="contact-info-icon"><i class="fa-brands fa-github"></i></div>
+              <div>
+                <strong>GitHub</strong>
+                <span>github.com/learnova</span>
+              </div>
+            </li>
+            <li>
+              <div class="contact-info-icon"><i class="fa-brands fa-x-twitter"></i></div>
+              <div>
+                <strong>Twitter</strong>
+                <span>@learnova_dev</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="faq-card">
+          <h3>Quick Answers</h3>
+          <div class="faq-item">
+            <strong>Is Learnova free?</strong>
+            <p>Yes, all content is currently free to access.</p>
+          </div>
+          <div class="faq-item">
+            <strong>Can I contribute content?</strong>
+            <p>We'd love community contributions. Reach out and let's talk.</p>
+          </div>
+          <div class="faq-item">
+            <strong>How often is content updated?</strong>
+            <p>We're constantly adding new topics and lessons.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

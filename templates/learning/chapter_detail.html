@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ chapter.get_meta_title }}{% endblock %}
+{% block meta_description %}{{ chapter.get_meta_description }}{% endblock %}
+{% block og_title %}{{ chapter.get_meta_title }}{% endblock %}
+{% block og_description %}{{ chapter.get_meta_description|truncatechars:150 }}{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Topics", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}"},
+    {"@type": "ListItem", "position": 2, "name": "{{ topic.title|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{{ topic.get_absolute_url }}"},
+    {"@type": "ListItem", "position": 3, "name": "{{ chapter.title|escapejs }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header page-header-sm">
+  <div class="container">
+    {% include 'partials/_breadcrumbs.html' %}
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="chapter-detail-layout">
+
+      <!-- Sidebar: Chapter List -->
+      <aside class="sidebar sidebar-left sidebar-sticky" aria-label="Chapters in {{ topic.title }}">
+        <div class="sidebar-card">
+          <h2 class="sidebar-title">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i> {{ topic.title }}
+          </h2>
+          <ol class="chapter-list">
+            {% for ch in chapters %}
+              <li class="chapter-list-item">
+                <a href="{{ ch.get_absolute_url }}" class="chapter-list-link {% if ch.id == chapter.id %}chapter-list-active{% endif %}" {% if ch.id == chapter.id %}aria-current="page"{% endif %}>
+                  <div class="chapter-list-order">{{ ch.order }}</div>
+                  <div class="chapter-list-info">
+                    <span class="chapter-list-title">{{ ch.title }}</span>
+                    <span class="chapter-list-count">{{ ch.num_lessons }} lesson{{ ch.num_lessons|pluralize }}</span>
+                  </div>
+                </a>
+              </li>
+            {% endfor %}
+          </ol>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="chapter-detail-main">
+        <div class="chapter-header">
+          <div class="chapter-order-badge">Chapter {{ chapter.order }}</div>
+          <h1>{{ chapter.title }}</h1>
+          <p class="chapter-description">{{ chapter.description }}</p>
+          <div class="chapter-meta-row">
+            {% if chapter.estimated_hours > 0 %}
+            <span class="stat-badge">
+              <i class="fa-regular fa-clock" aria-hidden="true"></i>
+              {{ chapter.estimated_hours }} hr{{ chapter.estimated_hours|pluralize }}
+            </span>
+            {% endif %}
+            <span class="stat-badge">
+              <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+              {{ lessons|length }} lesson{{ lessons|length|pluralize }}
+            </span>
+          </div>
+        </div>
+
+        {% if chapter.learning_objectives %}
+          <div class="chapter-learning-objectives prose">
+            <h2 class="section-subheading">Learning Objectives</h2>
+            {{ chapter.learning_objectives|safe }}
+          </div>
+        {% endif %}
+
+        {% if lessons %}
+          <h2 class="section-subheading">Lessons in This Chapter</h2>
+          <div class="lessons-list lessons-list-full">
+            {% for lesson in lessons %}
+              <a href="{{ lesson.get_absolute_url }}" class="lesson-card">
+                <div class="lesson-card-icon">
+                  <span class="lesson-number">{{ lesson.order }}</span>
+                </div>
+                <div class="lesson-card-body">
+                  <div class="lesson-card-meta-top">
+                    <span class="difficulty-badge {{ lesson.difficulty_class }}">{{ lesson.difficulty_label }}</span>
+                    <span class="lesson-reading-time"><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ lesson.reading_time }} min</span>
+                  </div>
+                  <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                  <p class="lesson-card-summary">{{ lesson.summary|truncatechars:140 }}</p>
+                </div>
+                <div class="lesson-card-right">
+                  <i class="fa-solid fa-chevron-right lesson-arrow" aria-hidden="true"></i>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fa-solid fa-file-circle-plus empty-icon" aria-hidden="true"></i>
+            <p>Lessons are coming soon for this chapter.</p>
+          </div>
+        {% endif %}
+      </main>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% load static %}
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+
+      <div class="footer-col footer-about">
+        <a href="{% url 'home' %}" class="footer-brand">
+          <img src="{% static 'img/logo.png' %}" alt="Learnova Logo">
+          <span>Learnova</span>
+        </a>
+        <p>A modern learning platform designed to help developers master new skills through structured, high-quality content.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Twitter" class="social-link"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" aria-label="GitHub" class="social-link"><i class="fa-brands fa-github"></i></a>
+          <a href="#" aria-label="LinkedIn" class="social-link"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="#" aria-label="YouTube" class="social-link"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-heading">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="{% url 'topics' %}">All Topics</a></li>
+          <li><a href="{% url 'topics' %}">Tutorials</a></li>
+          <li><a href="{% url 'topics' %}">Code Examples</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-heading">Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="{% url 'home' %}">Home</a></li>
+          <li><a href="{% url 'about' %}">About Us</a></li>
+          <li><a href="{% url 'contact' %}">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-heading">Newsletter</h3>
+        <p class="footer-newsletter-text">Get the latest tutorials and articles delivered to your inbox.</p>
+        <form class="newsletter-form" id="footerNewsletterForm" novalidate>
+          {% csrf_token %}
+          <input type="email" name="email" placeholder="your@email.com" class="newsletter-input" aria-label="Email for newsletter" required />
+          <button type="submit" class="newsletter-btn">Subscribe</button>
+        </form>
+        <p class="newsletter-feedback" id="footerNewsletterMsg" style="display:none;margin-top:0.5rem;font-size:0.82rem;"></p>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; {% now "Y" %} Learnova. All rights reserved. Built with Django.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const form = document.getElementById('footerNewsletterForm');
+  const msg  = document.getElementById('footerNewsletterMsg');
+  if (!form) return;
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const email = form.querySelector('input[type="email"]').value.trim();
+    const btn   = form.querySelector('button[type="submit"]');
+    if (!email) return;
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = '…';
+    try {
+      const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+      const res = await fetch('{% url "newsletter_subscribe" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({email}),
+      });
+      const data = await res.json();
+      msg.style.display = 'block';
+      if (data.ok) {
+        msg.style.color = 'var(--primary)';
+        msg.textContent = data.already ? 'Already subscribed!' : '✓ Subscribed!';
+        form.querySelector('input[type="email"]').value = '';
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+      } else {
+        msg.style.color = '#ef4444';
+        msg.textContent = data.error || 'Try again.';
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    } catch(err) {
+      msg.style.display = 'block';
+      msg.style.color = '#ef4444';
+      msg.textContent = 'Network error.';
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  });
+})();
+</script>
