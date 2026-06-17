@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Send Test Email: {{ campaign.subject }}</h1>
+
+<div style="max-width:600px;margin-top:20px;">
+  <div style="background:#ede9fe;border:1px solid #a78bfa;border-radius:8px;padding:16px;margin-bottom:20px;">
+    A test email will be sent to <strong>{{ admin_email }}</strong>.
+    No real subscribers will receive this.
+  </div>
+
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:20px;">
+    <dl style="display:grid;grid-template-columns:140px 1fr;gap:8px 12px;margin:0;">
+      <dt style="font-weight:600;color:#6b7280;">Subject</dt>
+      <dd style="margin:0;">[TEST] {{ campaign.subject }}</dd>
+      <dt style="font-weight:600;color:#6b7280;">Send to</dt>
+      <dd style="margin:0;">{{ admin_email }}</dd>
+    </dl>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:flex;gap:10px;">
+      <button type="submit"
+        style="background:#8b5cf6;color:#fff;padding:10px 22px;border:none;border-radius:6px;cursor:pointer;font-size:0.95rem;font-weight:600;">
+        ✓ Send Test Email
+      </button>
+      <a href="{% url 'admin:newsletter_newslettercampaign_changelist' %}"
+        style="padding:10px 22px;border:1px solid #d1d5db;border-radius:6px;text-decoration:none;font-size:0.95rem;color:#374151;">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

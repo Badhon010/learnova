@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1>Contributor Profile</h1>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="profile-detail-layout">
+
+      <!-- Profile Card -->
+      <aside class="profile-detail-sidebar">
+        <div class="sidebar-card profile-public-card">
+          <div class="profile-avatar-wrapper">
+            {% if profile.avatar %}
+              <img src="{{ profile.avatar.url }}" alt="Avatar" class="profile-avatar profile-avatar-lg" />
+            {% else %}
+              <div class="profile-avatar-placeholder profile-avatar-placeholder-lg">
+                {{ profile_user.username|first|upper }}
+              </div>
+            {% endif %}
+          </div>
+
+          <h2 class="profile-display-name">{{ profile.display_name }}</h2>
+          <span class="role-badge role-{{ profile.role }}">
+            <i class="fa-solid fa-pen-nib"></i> {{ profile.role|capfirst }}
+          </span>
+
+          {% if profile.bio %}
+          <p class="profile-bio">{{ profile.bio }}</p>
+          {% endif %}
+
+          <div class="profile-meta-list">
+            <div class="profile-meta-item">
+              <i class="fa-solid fa-calendar"></i>
+              <span>Joined {{ profile_user.date_joined|date:"F Y" }}</span>
+            </div>
+            <div class="profile-meta-item">
+              <i class="fa-solid fa-file-lines"></i>
+              <span>{{ published_lessons.count }} lesson{{ published_lessons.count|pluralize }} published</span>
+            </div>
+          </div>
+
+          <div class="profile-social-links">
+            {% if profile.website %}
+            <a href="{{ profile.website }}" target="_blank" rel="noopener" class="social-link" title="Website">
+              <i class="fa-solid fa-globe"></i>
+            </a>
+            {% endif %}
+            {% if profile.github_url %}
+            <a href="{{ profile.github_url }}" target="_blank" rel="noopener" class="social-link" title="GitHub">
+              <i class="fa-brands fa-github"></i>
+            </a>
+            {% endif %}
+            {% if profile.twitter_url %}
+            <a href="{{ profile.twitter_url }}" target="_blank" rel="noopener" class="social-link" title="Twitter / X">
+              <i class="fa-brands fa-x-twitter"></i>
+            </a>
+            {% endif %}
+            {% if profile.linkedin_url %}
+            <a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener" class="social-link" title="LinkedIn">
+              <i class="fa-brands fa-linkedin"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+
+      <!-- Published Lessons -->
+      <main class="profile-detail-main">
+        <h2 class="section-heading"><i class="fa-solid fa-book-open"></i> Published Lessons</h2>
+        {% if published_lessons %}
+        <div class="lessons-grid">
+          {% for lesson in published_lessons %}
+          <div class="lesson-card">
+            <div class="lesson-card-header">
+              <a href="{{ lesson.chapter.topic.get_absolute_url }}" class="topic-badge">{{ lesson.chapter.topic.title }}</a>
+              <span class="difficulty-badge {{ lesson.difficulty_class }}">{{ lesson.difficulty_label }}</span>
+            </div>
+            <h3 class="lesson-card-title">
+              <a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a>
+            </h3>
+            <p class="lesson-card-summary">{{ lesson.summary|truncatewords:20 }}</p>
+            <div class="lesson-card-footer">
+              <span><i class="fa-regular fa-clock"></i> {{ lesson.reading_time }} min</span>
+              <a href="{{ lesson.get_absolute_url }}" class="btn btn-sm btn-outline">Read Lesson</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fa-solid fa-book fa-2x" style="color:var(--text-muted);margin-bottom:12px;"></i>
+          <p>No published lessons yet.</p>
+        </div>
+        {% endif %}
+      </main>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

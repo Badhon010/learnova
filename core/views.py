@@ -10,7 +10,7 @@ from django.conf import settings
 from django import forms
 from django.db.models import Count, Q
 
-from learning.models import Topic, Lesson
+from learning.models import Topic, Chapter, Lesson
 from .models import NewsletterSubscriber, ContactMessage
 
 
@@ -176,6 +176,57 @@ def newsletter_subscribe(request):
             pass
 
     return JsonResponse({'ok': True, 'already': not created})
+
+
+def search_suggestions_view(request):
+    query = request.GET.get('q', '').strip()
+    if not query or len(query) < 2:
+        return JsonResponse({'results': []})
+
+    results = []
+
+    topics = Topic.objects.filter(
+        is_published=True,
+    ).filter(
+        Q(title__icontains=query) | Q(description__icontains=query)
+    )[:3]
+    for t in topics:
+        results.append({
+            'type': 'topic',
+            'title': t.title,
+            'url': t.get_absolute_url(),
+            'meta': t.description[:80] + '…' if len(t.description) > 80 else t.description,
+        })
+
+    chapters = Chapter.objects.filter(
+        is_published=True,
+    ).filter(
+        Q(title__icontains=query) | Q(description__icontains=query)
+    ).select_related('topic')[:2]
+    for c in chapters:
+        results.append({
+            'type': 'chapter',
+            'title': c.title,
+            'url': c.get_absolute_url(),
+            'meta': c.topic.title,
+        })
+
+    lessons = Lesson.objects.filter(
+        is_published=True,
+        chapter__is_published=True,
+        chapter__topic__is_published=True,
+    ).filter(
+        Q(title__icontains=query) | Q(summary__icontains=query)
+    ).select_related('chapter', 'chapter__topic')[:5]
+    for l in lessons:
+        results.append({
+            'type': 'lesson',
+            'title': l.title,
+            'url': l.get_absolute_url(),
+            'meta': l.chapter.topic.title + ' / ' + l.chapter.title,
+        })
+
+    return JsonResponse({'results': results[:8]})
 
 
 def handler404(request, exception):

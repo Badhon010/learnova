@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Quiz Result | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-circle-check"></i> Quiz Complete</h1>
+    <p>{{ quiz.title }}</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:720px">
+
+      <!-- Score card -->
+      <div class="quiz-score-card {% if passed %}quiz-score-passed{% else %}quiz-score-failed{% endif %}">
+        <div class="quiz-score-number">{{ score }}%</div>
+        <div class="quiz-score-label">
+          {{ correct_count }} / {{ total }} correct
+        </div>
+        {% if passed %}
+        <div class="quiz-result-badge quiz-pass"><i class="fa-solid fa-trophy"></i> Passed!</div>
+        {% else %}
+        <div class="quiz-result-badge quiz-fail"><i class="fa-solid fa-rotate-right"></i> Not quite — review below and try again</div>
+        {% endif %}
+      </div>
+
+      <!-- Answers review -->
+      <div class="quiz-results-list">
+        {% for r in results %}
+        <div class="quiz-result-item {% if r.is_correct %}result-correct{% else %}result-incorrect{% endif %}">
+          <p class="quiz-question-text">
+            <span class="quiz-question-num">{{ forloop.counter }}.</span> {{ r.question.text }}
+          </p>
+          <div class="quiz-choices-review">
+            {% for choice in r.all_choices %}
+            <div class="choice-review
+              {% if choice == r.correct_choice %}choice-correct{% endif %}
+              {% if choice == r.chosen and not r.is_correct %}choice-wrong{% endif %}">
+              {% if choice == r.correct_choice %}
+                <i class="fa-solid fa-check"></i>
+              {% elif choice == r.chosen and not r.is_correct %}
+                <i class="fa-solid fa-xmark"></i>
+              {% else %}
+                <i class="fa-regular fa-circle"></i>
+              {% endif %}
+              {{ choice.text }}
+              {% if choice == r.correct_choice %}<strong>(correct)</strong>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions" style="margin-top:24px;">
+        <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-primary">
+          <i class="fa-solid fa-rotate-right"></i> Retake Quiz
+        </a>
+        {% if lesson %}
+        <a href="{{ lesson.get_absolute_url }}" class="btn btn-outline">Back to Lesson</a>
+        {% endif %}
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">Dashboard</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

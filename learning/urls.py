@@ -6,4 +6,6 @@ urlpatterns = [
     path('topics/<slug:slug>/', views.TopicDetailView.as_view(), name='topic_detail'),
     path('topics/<slug:topic_slug>/chapters/<slug:chapter_slug>/', views.ChapterDetailView.as_view(), name='chapter_detail'),
     path('lessons/<slug:slug>/', views.LessonDetailView.as_view(), name='lesson_detail'),
+    path('lessons/<slug:slug>/bookmark/', views.bookmark_toggle_view, name='lesson_bookmark'),
+    path('api/progress/', views.update_progress_view, name='update_progress'),
 ]

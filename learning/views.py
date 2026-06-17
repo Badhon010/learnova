@@ -1,7 +1,14 @@
 from django.views.generic import ListView, DetailView
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.db.models import Count, Q, Prefetch
-from .models import Topic, Chapter, Lesson
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+import json
+
+from .models import Topic, Chapter, Lesson, LessonBookmark, UserLessonProgress, RecentlyViewed
 
 
 def _published_topics():
@@ -193,4 +200,93 @@ class LessonDetailView(DetailView):
             {'label': chapter.title, 'url': chapter.get_absolute_url()},
             {'label': lesson.title, 'url': None},
         ]
+
+        # Quiz
+        try:
+            ctx['quiz'] = lesson.quiz
+        except Exception:
+            ctx['quiz'] = None
+
+        # Bookmark + progress for authenticated users
+        if self.request.user.is_authenticated:
+            ctx['is_bookmarked'] = LessonBookmark.objects.filter(
+                user=self.request.user, lesson=lesson
+            ).exists()
+            progress = UserLessonProgress.objects.filter(
+                user=self.request.user, lesson=lesson
+            ).first()
+            ctx['user_progress'] = progress
+
+            # Update RecentlyViewed
+            RecentlyViewed.objects.update_or_create(
+                user=self.request.user, lesson=lesson,
+                defaults={},
+            )
+
+            # Best quiz attempt
+            if ctx['quiz']:
+                from quizzes.models import QuizAttempt
+                ctx['best_attempt'] = QuizAttempt.objects.filter(
+                    user=self.request.user, quiz=ctx['quiz']
+                ).order_by('-score').first()
+            else:
+                ctx['best_attempt'] = None
+        else:
+            ctx['is_bookmarked'] = False
+            ctx['user_progress'] = None
+            ctx['best_attempt'] = None
+
         return ctx
+
+
+@login_required
+@require_POST
+@csrf_protect
+def bookmark_toggle_view(request, slug):
+    lesson = get_object_or_404(Lesson, slug=slug, is_published=True)
+    bookmark, created = LessonBookmark.objects.get_or_create(
+        user=request.user, lesson=lesson
+    )
+    if not created:
+        bookmark.delete()
+        bookmarked = False
+    else:
+        bookmarked = True
+    return JsonResponse({'bookmarked': bookmarked})
+
+
+@login_required
+@require_POST
+@csrf_protect
+def update_progress_view(request):
+    try:
+        data = json.loads(request.body)
+    except (ValueError, AttributeError):
+        data = request.POST
+
+    slug = data.get('lesson_slug', '')
+    try:
+        progress_pct = int(data.get('progress', 0))
+        progress_pct = max(0, min(100, progress_pct))
+    except (ValueError, TypeError):
+        progress_pct = 0
+
+    if not slug:
+        return JsonResponse({'ok': False, 'error': 'No lesson_slug provided'}, status=400)
+
+    lesson = get_object_or_404(Lesson, slug=slug, is_published=True)
+
+    progress_obj, _ = UserLessonProgress.objects.update_or_create(
+        user=request.user, lesson=lesson,
+        defaults={
+            'progress_pct': progress_pct,
+            'is_complete': progress_pct >= 100,
+        },
+    )
+
+    RecentlyViewed.objects.update_or_create(
+        user=request.user, lesson=lesson,
+        defaults={},
+    )
+
+    return JsonResponse({'ok': True, 'progress': progress_pct})

@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
+from django.contrib.auth.models import User
 from django_ckeditor_5.fields import CKEditor5Field
+from django.utils import timezone
 
 
 DIFFICULTY_CHOICES = [
@@ -14,6 +16,13 @@ DIFFICULTY_COLOR = {
     'intermediate': 'badge-intermediate',
     'advanced': 'badge-advanced',
 }
+
+LESSON_STATUS_CHOICES = [
+    ('draft', 'Draft'),
+    ('pending_review', 'Pending Review'),
+    ('published', 'Published'),
+    ('rejected', 'Rejected'),
+]
 
 
 class Topic(models.Model):
@@ -150,6 +159,28 @@ class Lesson(models.Model):
     order = models.PositiveIntegerField(default=0)
     reading_time = models.PositiveIntegerField(default=5, help_text='Estimated reading time in minutes')
     is_published = models.BooleanField(default=True)
+
+    # Contributor workflow
+    status = models.CharField(
+        max_length=20,
+        choices=LESSON_STATUS_CHOICES,
+        default='published',
+        help_text='Lesson publication status.',
+    )
+    submitted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='submitted_lessons',
+        help_text='The contributor who submitted this lesson.',
+    )
+    rejection_note = models.TextField(
+        blank=True,
+        help_text='Admin note explaining why this lesson was rejected.',
+    )
+    published_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text='When the lesson was published.',
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -178,3 +209,62 @@ class Lesson(models.Model):
     @property
     def difficulty_class(self):
         return DIFFICULTY_COLOR.get(self.difficulty, 'badge-beginner')
+
+    def publish(self):
+        self.status = 'published'
+        self.is_published = True
+        if not self.published_at:
+            self.published_at = timezone.now()
+        self.save()
+
+    def reject(self, note=''):
+        self.status = 'rejected'
+        self.is_published = False
+        self.rejection_note = note
+        self.save()
+
+
+class UserLessonProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_progress')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='progress_records')
+    progress_pct = models.PositiveIntegerField(default=0, help_text='Reading progress 0–100%')
+    last_viewed = models.DateTimeField(auto_now=True)
+    is_complete = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        verbose_name = 'Lesson Progress'
+        verbose_name_plural = 'Lesson Progress'
+
+    def __str__(self):
+        return f'{self.user.username} — {self.lesson.title} ({self.progress_pct}%)'
+
+
+class LessonBookmark(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookmarks')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='bookmarks')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        ordering = ['-created_at']
+        verbose_name = 'Lesson Bookmark'
+        verbose_name_plural = 'Lesson Bookmarks'
+
+    def __str__(self):
+        return f'{self.user.username} → {self.lesson.title}'
+
+
+class RecentlyViewed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recently_viewed')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='recent_views')
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        ordering = ['-viewed_at']
+        verbose_name = 'Recently Viewed'
+        verbose_name_plural = 'Recently Viewed'
+
+    def __str__(self):
+        return f'{self.user.username} viewed {self.lesson.title}'

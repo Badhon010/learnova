@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Review Pending Lessons</h1>
+
+{% if pending_lessons %}
+<div style="display:flex;flex-direction:column;gap:20px;margin-top:20px;">
+  {% for lesson in pending_lessons %}
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2 style="margin:0 0 6px;font-size:1.1rem;">{{ lesson.title }}</h2>
+        <div style="color:#6b7280;font-size:0.875rem;">
+          {{ lesson.chapter }} &middot; {{ lesson.get_difficulty_display }} &middot;
+          Submitted by <strong>{{ lesson.submitted_by.username|default:"unknown" }}</strong>
+          on {{ lesson.updated_at|date:"M j, Y" }}
+        </div>
+        <p style="margin:10px 0 0;color:#374151;">{{ lesson.summary|truncatewords:40 }}</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <!-- Approve: POST form to prevent CSRF via GET -->
+        <form method="post" action="{% url 'admin:lesson-approve' lesson.pk %}" style="margin:0;" onsubmit="return confirm('Publish this lesson?')">
+          {% csrf_token %}
+          <button type="submit"
+            style="background:#22c55e;color:#fff;padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:0.875rem;">
+            ✓ Approve
+          </button>
+        </form>
+        <a href="{% url 'admin:lesson-reject' lesson.pk %}"
+           style="background:#ef4444;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:0.875rem;">
+          ✗ Reject
+        </a>
+        <a href="{% url 'admin:learning_lesson_change' lesson.pk %}" target="_blank"
+           style="background:#3b82f6;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:0.875rem;">
+          View
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p style="margin-top:20px;color:#6b7280;font-size:1rem;">No lessons pending review. 🎉</p>
+{% endif %}
+{% endblock %}

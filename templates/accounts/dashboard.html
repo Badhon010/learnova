@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1>My Dashboard</h1>
+    <p>Welcome back, <strong>{{ profile.display_name }}</strong>!</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="dashboard-layout">
+
+      <!-- Sidebar -->
+      <aside class="sidebar sidebar-left">
+        <div class="sidebar-card dashboard-profile-card">
+          <div class="profile-avatar-wrapper">
+            {% if profile.avatar %}
+              <img src="{{ profile.avatar.url }}" alt="Avatar" class="profile-avatar" />
+            {% else %}
+              <div class="profile-avatar-placeholder">
+                {{ request.user.username|first|upper }}
+              </div>
+            {% endif %}
+          </div>
+          <div class="profile-info">
+            <h3>{{ profile.display_name }}</h3>
+            <span class="role-badge role-{{ profile.role }}">
+              <i class="fa-solid fa-{% if profile.role == 'contributor' %}pen-nib{% else %}book-reader{% endif %}"></i>
+              {{ profile.role|capfirst }}
+            </span>
+            <p class="profile-email">{{ request.user.email }}</p>
+          </div>
+          <a href="{% url 'profile_edit' %}" class="btn btn-outline btn-sm btn-full">
+            <i class="fa-solid fa-pen"></i> Edit Profile
+          </a>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-compass"></i> Quick Links</h3>
+          <ul class="quick-nav">
+            <li><a href="{% url 'topics' %}"><i class="fa-solid fa-book"></i> Browse Topics</a></li>
+            <li><a href="{% url 'saved_lessons' %}"><i class="fa-solid fa-bookmark"></i> Saved Lessons</a></li>
+            {% if profile.role == 'contributor' %}
+            <li><a href="{% url 'my_lessons' %}"><i class="fa-solid fa-pen-nib"></i> My Lessons</a></li>
+            {% endif %}
+            <li><a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="dashboard-main">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Stats grid -->
+        <div class="dashboard-stats-grid">
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-green"><i class="fa-solid fa-book"></i></div>
+            <div>
+              <div class="stat-number">{{ topic_count }}</div>
+              <div class="stat-label">Topics Available</div>
+            </div>
+          </div>
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-file-lines"></i></div>
+            <div>
+              <div class="stat-number">{{ lesson_count }}</div>
+              <div class="stat-label">Lessons to Read</div>
+            </div>
+          </div>
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-circle-half-stroke"></i></div>
+            <div>
+              <div class="stat-number">{{ lessons_started }}</div>
+              <div class="stat-label">Lessons Started</div>
+            </div>
+          </div>
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+              <div class="stat-number">{{ lessons_completed }}</div>
+              <div class="stat-label">Lessons Completed</div>
+            </div>
+          </div>
+          {% if quizzes_completed %}
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-question-circle"></i></div>
+            <div>
+              <div class="stat-number">{{ quizzes_completed }}</div>
+              <div class="stat-label">Quizzes Done</div>
+            </div>
+          </div>
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-chart-bar"></i></div>
+            <div>
+              <div class="stat-number">{{ avg_score }}%</div>
+              <div class="stat-label">Avg Quiz Score</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Continue Learning -->
+        {% if continue_learning %}
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-play-circle"></i> Continue Learning</h2>
+          <div class="continue-learning-list">
+            {% for item in continue_learning %}
+            <div class="continue-lesson-card">
+              <a href="{{ item.lesson.get_absolute_url }}" class="continue-lesson-title">{{ item.lesson.title }}</a>
+              <span class="continue-lesson-meta">{{ item.lesson.chapter.topic.title }} / {{ item.lesson.chapter.title }}</span>
+              <div class="progress-bar-wrapper">
+                <div class="progress-bar-fill {% if item.is_complete %}progress-complete{% endif %}" style="width: {{ item.progress }}%"></div>
+              </div>
+              <span class="progress-label">{% if item.is_complete %}<i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Complete{% else %}{{ item.progress }}% read{% endif %}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Recently Viewed -->
+        {% if recently_viewed %}
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-clock-rotate-left"></i> Recently Viewed</h2>
+          <ul class="quick-nav">
+            {% for rv in recently_viewed %}
+            <li>
+              <a href="{{ rv.lesson.get_absolute_url }}">
+                <i class="fa-solid fa-file-lines"></i>
+                {{ rv.lesson.title }}
+                <span class="meta-text" style="font-size:0.8rem;color:var(--text-muted);">{{ rv.viewed_at|timesince }} ago</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Saved Lessons -->
+        {% if bookmarks %}
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-bookmark"></i> Saved Lessons <a href="{% url 'saved_lessons' %}" class="view-all-link">View all</a></h2>
+          <ul class="quick-nav">
+            {% for bm in bookmarks %}
+            <li>
+              <a href="{{ bm.lesson.get_absolute_url }}">
+                <i class="fa-solid fa-bookmark"></i> {{ bm.lesson.title }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Start Learning if no activity -->
+        {% if not continue_learning and not recently_viewed %}
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-rocket"></i> Start Learning</h2>
+          <p>Explore structured topics and lessons built for every skill level.</p>
+          <a href="{% url 'topics' %}" class="btn btn-primary">Browse All Topics <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        {% endif %}
+
+        {% if profile.role == 'contributor' %}
+        <div class="dashboard-section contributor-section">
+          <h2><i class="fa-solid fa-pen-nib"></i> Contributor Zone</h2>
+          <p>As a contributor, you can submit new lessons and manage your existing submissions.</p>
+          <div class="form-actions">
+            <a href="{% url 'submit_lesson' %}" class="btn btn-primary">
+              <i class="fa-solid fa-plus"></i> Submit a Lesson
+            </a>
+            <a href="{% url 'my_lessons' %}" class="btn btn-outline">
+              <i class="fa-solid fa-list"></i> My Lessons
+            </a>
+            <a href="/admin/" class="btn btn-outline">
+              <i class="fa-solid fa-shield-halved"></i> Admin Panel
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-user-gear"></i> Account Details</h2>
+          <div class="account-details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Username</span>
+              <span class="detail-value">{{ request.user.username }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ request.user.email|default:"Not set" }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Role</span>
+              <span class="detail-value">{{ profile.role|capfirst }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Member Since</span>
+              <span class="detail-value">{{ request.user.date_joined|date:"F j, Y" }}</span>
+            </div>
+            {% if profile.website %}
+            <div class="detail-item">
+              <span class="detail-label">Website</span>
+              <span class="detail-value"><a href="{{ profile.website }}" target="_blank" rel="noopener">{{ profile.website }}</a></span>
+            </div>
+            {% endif %}
+            {% if profile.bio %}
+            <div class="detail-item detail-item-full">
+              <span class="detail-label">Bio</span>
+              <span class="detail-value">{{ profile.bio }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+{% endblock %}

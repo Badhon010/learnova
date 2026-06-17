@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils import timezone
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.urls import path
 from unfold.admin import ModelAdmin, TabularInline
-from .models import Topic, Chapter, Lesson
+from .models import Topic, Chapter, Lesson, UserLessonProgress, LessonBookmark, RecentlyViewed
 
 
 class ChapterInline(TabularInline):
@@ -22,24 +26,21 @@ class LessonInline(TabularInline):
 
 @admin.register(Topic)
 class TopicAdmin(ModelAdmin):
-    compressed_fields = True  # Keeps form layouts tidy under Unfold
-    
+    compressed_fields = True
+
     list_display = [
         'title', 'icon_preview', 'order', 'featured',
         'is_published', 'created_at', 'updated_at',
     ]
     list_filter = ['is_published', 'featured', 'created_at']
-    
-    # REMOVED 'order' from here so it is no longer an editable input field on the list page
-    list_editable = ['featured', 'is_published'] 
-    
+    list_editable = ['featured', 'is_published']
     search_fields = ['title', 'description', 'meta_title']
     prepopulated_fields = {'slug': ('title',)}
     ordering = ['order', 'title']
     inlines = [ChapterInline]
     list_per_page = 20
     readonly_fields = ['created_at', 'updated_at']
-    
+
     fieldsets = (
         (None, {
             'fields': ('title', 'slug', 'description', 'order', 'is_published', 'featured'),
@@ -77,20 +78,17 @@ class TopicAdmin(ModelAdmin):
 @admin.register(Chapter)
 class ChapterAdmin(ModelAdmin):
     compressed_fields = True
-    
+
     list_display = ['title', 'topic', 'order', 'lesson_count', 'is_published', 'created_at']
     list_filter = ['is_published', 'topic']
-    
-    # REMOVED 'order' from here as well
     list_editable = ['is_published']
-    
     search_fields = ['title', 'description', 'topic__title', 'meta_title']
     prepopulated_fields = {'slug': ('title',)}
     ordering = ['topic__order', 'topic__title', 'order']
     inlines = [LessonInline]
     list_per_page = 20
     readonly_fields = ['created_at', 'updated_at']
-    
+
     fieldsets = (
         (None, {
             'fields': ('topic', 'title', 'slug', 'description', 'estimated_hours', 'order', 'is_published'),
@@ -117,28 +115,29 @@ class ChapterAdmin(ModelAdmin):
 @admin.register(Lesson)
 class LessonAdmin(ModelAdmin):
     compressed_fields = True
-    
+
     list_display = [
-        'title', 'chapter', 'difficulty', 'order',
-        'reading_time', 'featured', 'is_published', 'created_at',
+        'title', 'chapter', 'status_badge', 'difficulty', 'order',
+        'reading_time', 'featured', 'is_published', 'submitted_by', 'created_at',
     ]
-    list_filter = ['is_published', 'difficulty', 'featured', 'chapter__topic', 'chapter']
-    
-    # REMOVED 'order' from here as well
+    list_filter = ['status', 'is_published', 'difficulty', 'featured', 'chapter__topic', 'chapter']
     list_editable = ['featured', 'is_published']
-    
     search_fields = ['title', 'summary', 'chapter__title', 'chapter__topic__title']
     prepopulated_fields = {'slug': ('title',)}
     ordering = ['chapter__topic__title', 'chapter__order', 'order']
     list_per_page = 20
-    readonly_fields = ['created_at', 'updated_at']
-    
+    readonly_fields = ['created_at', 'updated_at', 'published_at']
+    actions = ['publish_lessons', 'reject_lessons']
+
     fieldsets = (
         ('Lesson Identity', {
             'fields': (
                 'chapter', 'title', 'slug', 'summary',
                 'order', 'reading_time', 'is_published',
             ),
+        }),
+        ('Publication Status', {
+            'fields': ('status', 'submitted_by', 'rejection_note', 'published_at'),
         }),
         ('Classification Parameters', {
             'fields': ('difficulty', 'featured'),
@@ -160,3 +159,116 @@ class LessonAdmin(ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    @admin.display(description='Status')
+    def status_badge(self, obj):
+        colors = {
+            'draft': '#6b7280',
+            'pending_review': '#f59e0b',
+            'published': '#22c55e',
+            'rejected': '#ef4444',
+        }
+        color = colors.get(obj.status, '#6b7280')
+        label = obj.get_status_display()
+        return format_html(
+            '<span style="background:{};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.78rem;">{}</span>',
+            color, label
+        )
+
+    @admin.action(description='Publish selected lessons')
+    def publish_lessons(self, request, queryset):
+        count = 0
+        for lesson in queryset:
+            lesson.publish()
+            count += 1
+        self.message_user(request, f'{count} lesson(s) published.', messages.SUCCESS)
+
+    @admin.action(description='Reject selected lessons')
+    def reject_lessons(self, request, queryset):
+        count = 0
+        for lesson in queryset:
+            lesson.reject()
+            count += 1
+        self.message_user(request, f'{count} lesson(s) rejected.', messages.SUCCESS)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('review/', self.admin_site.admin_view(self.review_lessons_view), name='lesson-review'),
+            path('review/<int:pk>/approve/', self.admin_site.admin_view(self.approve_lesson_view), name='lesson-approve'),
+            path('review/<int:pk>/reject/', self.admin_site.admin_view(self.reject_lesson_view), name='lesson-reject'),
+        ]
+        return custom_urls + urls
+
+    def review_lessons_view(self, request):
+        pending = Lesson.objects.filter(status='pending_review').select_related(
+            'chapter', 'chapter__topic', 'submitted_by'
+        ).order_by('created_at')
+        return render(request, 'admin/learning/lesson/review.html', {
+            'pending_lessons': pending,
+            'title': 'Review Pending Lessons',
+            'opts': self.model._meta,
+        })
+
+    def approve_lesson_view(self, request, pk):
+        if request.method != 'POST':
+            from django.http import HttpResponseNotAllowed
+            return HttpResponseNotAllowed(['POST'])
+        lesson = Lesson.objects.get(pk=pk)
+        lesson.publish()
+        self.message_user(request, f'Lesson "{lesson.title}" has been published.', messages.SUCCESS)
+        return redirect('../')
+
+    def reject_lesson_view(self, request, pk):
+        if request.method == 'POST':
+            lesson = Lesson.objects.get(pk=pk)
+            note = request.POST.get('rejection_note', '')
+            lesson.reject(note=note)
+            self.message_user(request, f'Lesson "{lesson.title}" has been rejected.', messages.SUCCESS)
+            return redirect('../')
+        lesson = Lesson.objects.get(pk=pk)
+        return render(request, 'admin/learning/lesson/reject_form.html', {
+            'lesson': lesson,
+            'title': 'Reject Lesson',
+            'opts': self.model._meta,
+        })
+
+
+@admin.register(UserLessonProgress)
+class UserLessonProgressAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'lesson', 'progress_pct', 'is_complete', 'last_viewed']
+    list_filter = ['is_complete']
+    search_fields = ['user__username', 'lesson__title']
+    readonly_fields = ['user', 'lesson', 'progress_pct', 'is_complete', 'last_viewed']
+    ordering = ['-last_viewed']
+    list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(LessonBookmark)
+class LessonBookmarkAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'lesson', 'created_at']
+    search_fields = ['user__username', 'lesson__title']
+    readonly_fields = ['user', 'lesson', 'created_at']
+    ordering = ['-created_at']
+    list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(RecentlyViewed)
+class RecentlyViewedAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'lesson', 'viewed_at']
+    search_fields = ['user__username', 'lesson__title']
+    readonly_fields = ['user', 'lesson', 'viewed_at']
+    ordering = ['-viewed_at']
+    list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False

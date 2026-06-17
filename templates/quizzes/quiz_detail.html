@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ quiz.title }} | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-circle-question"></i> {{ quiz.title }}</h1>
+    {% if lesson %}
+    <p>Quiz for: <a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a></p>
+    {% endif %}
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:720px">
+
+      {% if best_attempt %}
+      <div class="alert alert-success" style="margin-bottom:20px;">
+        <i class="fa-solid fa-chart-bar"></i>
+        Your best score: <strong>{{ best_attempt.score }}%</strong>
+        {% if best_attempt.passed %} — <span style="color:#22c55e;"><i class="fa-solid fa-check"></i> Passed</span>{% endif %}
+        &nbsp;·&nbsp; Retake below to improve your score.
+      </div>
+      {% endif %}
+
+      <div class="quiz-info-bar">
+        <span><i class="fa-solid fa-list-check"></i> {{ questions|length }} question{{ questions|length|pluralize }}</span>
+        <span><i class="fa-solid fa-trophy"></i> Pass at {{ quiz.pass_pct }}%</span>
+      </div>
+
+      <form method="post" id="quizForm" class="auth-form">
+        {% csrf_token %}
+
+        {% for question in questions %}
+        <div class="quiz-question" id="q{{ question.id }}">
+          <p class="quiz-question-text">
+            <span class="quiz-question-num">{{ forloop.counter }}.</span>
+            {{ question.text }}
+          </p>
+          <div class="quiz-choices">
+            {% for choice in question.choices.all %}
+            <label class="quiz-choice-label">
+              <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required />
+              <span class="quiz-choice-text">{{ choice.text }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="quizSubmitBtn">
+            <i class="fa-solid fa-paper-plane"></i> Submit Quiz
+          </button>
+          {% if lesson %}
+          <a href="{{ lesson.get_absolute_url }}" class="btn btn-outline">Back to Lesson</a>
+          {% endif %}
+        </div>
+      </form>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

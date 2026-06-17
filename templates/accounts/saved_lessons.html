@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Saved Lessons | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-bookmark"></i> Saved Lessons</h1>
+    <p>Your bookmarked lessons, all in one place.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:800px">
+      <a href="{% url 'dashboard' %}" class="btn btn-outline" style="margin-bottom:20px;display:inline-flex;align-items:center;gap:8px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+
+      {% if bookmarks %}
+      <div class="lesson-rows">
+        {% for bm in bookmarks %}
+        <div class="lesson-row">
+          <div>
+            <a href="{{ bm.lesson.get_absolute_url }}" class="lesson-row-title">{{ bm.lesson.title }}</a>
+            <div class="lesson-row-meta">
+              <span>{{ bm.lesson.chapter.topic.title }}</span>
+              <span>&middot;</span>
+              <span>{{ bm.lesson.chapter.title }}</span>
+              <span>&middot;</span>
+              <span class="difficulty-badge {{ bm.lesson.difficulty_class }}" style="font-size:0.75rem;">{{ bm.lesson.difficulty_label }}</span>
+            </div>
+          </div>
+          <div class="lesson-row-actions">
+            <a href="{{ bm.lesson.get_absolute_url }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-book-open"></i> Read</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fa-regular fa-bookmark fa-3x" style="color:var(--text-muted);margin-bottom:16px;"></i>
+        <p>You haven't bookmarked any lessons yet.</p>
+        <a href="{% url 'topics' %}" class="btn btn-primary">Browse Topics</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

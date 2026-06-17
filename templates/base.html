@@ -28,7 +28,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{% static 'fa/css/all.min.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/navbar.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/home.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}" />
   {% block extra_head %}{% endblock %}
 
   {% block json_ld %}{% endblock %}
@@ -40,6 +45,50 @@
   <div class="reading-progress" id="readingProgress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
 
   {% include 'partials/_navbar.html' %}
+
+  <!-- Search Modal -->
+  <div class="search-modal-overlay" id="searchModalOverlay" role="dialog" aria-modal="true" aria-label="Search">
+    <div class="search-modal-box">
+      <form class="search-modal-header" action="{% url 'topics' %}" method="get" id="searchForm">
+        <i class="fa-solid fa-magnifying-glass search-modal-icon"></i>
+        <input
+          type="search"
+          name="search"
+          class="search-modal-input"
+          id="searchModalInput"
+          placeholder="Search topics, lessons…"
+          autocomplete="off"
+          aria-label="Search"
+          aria-autocomplete="list"
+          aria-controls="searchResults"
+        />
+        <button type="button" class="search-modal-close" id="searchModalClose" aria-label="Close search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </form>
+      <div class="search-modal-suggestions" id="searchSuggestionsArea">
+        <!-- Populated by JS when input has query, otherwise quick links shown -->
+        <div id="quickLinks">
+          <p class="search-modal-section-label">Quick links</p>
+          <a href="{% url 'topics' %}" class="search-modal-suggestion-item">
+            <i class="fa-solid fa-layer-group"></i><span>All Topics</span>
+          </a>
+        </div>
+        <ul id="searchResults" class="search-results-list" role="listbox" aria-label="Search results" style="display:none;list-style:none;margin:0;padding:0;"></ul>
+        <div id="searchSpinner" style="display:none;padding:12px 16px;color:var(--text-muted);font-size:0.875rem;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Searching…
+        </div>
+        <div id="searchEmpty" style="display:none;padding:12px 16px;color:var(--text-muted);font-size:0.875rem;">
+          No results found.
+        </div>
+      </div>
+      <div class="search-modal-footer">
+        <span class="search-modal-shortcut"><kbd>↑↓</kbd> navigate</span>
+        <span class="search-modal-shortcut"><kbd>&#x21B5;</kbd> open</span>
+        <span class="search-modal-shortcut"><kbd>Esc</kbd> close</span>
+      </div>
+    </div>
+  </div>
 
   <main id="main-content" tabindex="-1">
     {% if messages %}
@@ -58,6 +107,10 @@
     <i class="fa-solid fa-arrow-up"></i>
   </button>
 
+  <script>
+    /* Expose search URL for main.js */
+    window.LEARNOVA_SEARCH_URL = '{% url "search_suggestions" %}';
+  </script>
   <script src="{% static 'js/main.js' %}"></script>
   {% block extra_scripts %}{% endblock %}
 </body>

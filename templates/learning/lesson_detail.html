@@ -92,9 +92,61 @@
             {% if lesson_total > 1 %}
               <span class="lesson-position-badge">Lesson {{ lesson_position }} of {{ lesson_total }}</span>
             {% endif %}
+            {% if best_attempt %}
+              <span class="quiz-score-badge {% if best_attempt.passed %}quiz-badge-pass{% else %}quiz-badge-fail{% endif %}">
+                <i class="fa-solid fa-star"></i> {{ best_attempt.score }}%
+              </span>
+            {% endif %}
           </div>
-          <h1>{{ lesson.title }}</h1>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+            <h1 style="flex:1;">{{ lesson.title }}</h1>
+            {% if request.user.is_authenticated %}
+            <button
+              class="bookmark-btn {% if is_bookmarked %}bookmarked{% endif %}"
+              id="bookmarkBtn"
+              data-url="{% url 'lesson_bookmark' lesson.slug %}"
+              data-bookmarked="{{ is_bookmarked|yesno:'true,false' }}"
+              aria-label="{% if is_bookmarked %}Remove bookmark{% else %}Bookmark this lesson{% endif %}"
+              title="{% if is_bookmarked %}Saved{% else %}Save lesson{% endif %}"
+            >
+              <i class="{% if is_bookmarked %}fa-solid{% else %}fa-regular{% endif %} fa-bookmark"></i>
+            </button>
+            {% endif %}
+          </div>
           <p class="lesson-summary">{{ lesson.summary }}</p>
+
+          <!-- User progress bar -->
+          {% if user_progress %}
+          <div class="lesson-user-progress">
+            <div class="lesson-progress-bar">
+              <div class="lesson-progress-fill {% if user_progress.is_complete %}progress-complete{% endif %}"
+                   id="lessonProgressFill"
+                   style="width: {{ user_progress.progress_pct }}%"></div>
+            </div>
+            <span class="lesson-progress-label">
+              {% if user_progress.is_complete %}
+                <i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Completed
+              {% else %}
+                {{ user_progress.progress_pct }}% read
+              {% endif %}
+            </span>
+            {% if not user_progress.is_complete %}
+            <button class="btn btn-sm btn-outline" id="markCompleteBtn">
+              <i class="fa-solid fa-check"></i> Mark Complete
+            </button>
+            {% endif %}
+          </div>
+          {% elif request.user.is_authenticated %}
+          <div class="lesson-user-progress" id="progressContainer" style="display:none;">
+            <div class="lesson-progress-bar">
+              <div class="lesson-progress-fill" id="lessonProgressFill" style="width:0%"></div>
+            </div>
+            <span class="lesson-progress-label" id="progressLabel">0% read</span>
+            <button class="btn btn-sm btn-outline" id="markCompleteBtn" style="display:none;">
+              <i class="fa-solid fa-check"></i> Mark Complete
+            </button>
+          </div>
+          {% endif %}
         </header>
 
         {% if lesson.video_url %}
@@ -112,6 +164,36 @@
             <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
             <p>Lesson content is being prepared. Check back soon!</p>
           </div>
+        {% endif %}
+
+        <!-- Quiz Section -->
+        {% if quiz %}
+        <div class="quiz-section" id="quizSection">
+          <div class="quiz-card">
+            <div class="quiz-card-header">
+              <h2><i class="fa-solid fa-circle-question"></i> Knowledge Check</h2>
+              <p>Test your understanding of this lesson.</p>
+            </div>
+            <div class="quiz-card-body">
+              <div class="quiz-info-bar">
+                <span><i class="fa-solid fa-list-check"></i> {{ quiz.questions.count }} question{{ quiz.questions.count|pluralize }}</span>
+                <span><i class="fa-solid fa-trophy"></i> Pass at {{ quiz.pass_pct }}%</span>
+                {% if best_attempt %}
+                <span><i class="fa-solid fa-star"></i> Your best: {{ best_attempt.score }}%
+                  {% if best_attempt.passed %}<span style="color:#22c55e;">(Passed)</span>{% endif %}
+                </span>
+                {% endif %}
+              </div>
+              <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-primary">
+                {% if best_attempt %}
+                  <i class="fa-solid fa-rotate-right"></i> Retake Quiz
+                {% else %}
+                  <i class="fa-solid fa-play"></i> Take Quiz
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
         {% endif %}
 
         <!-- Prev / Next Navigation -->
@@ -167,29 +249,145 @@
 
 {% block extra_scripts %}
 <script>
-  (function () {
-    // Build table of contents from lesson headings
-    document.addEventListener('DOMContentLoaded', function () {
-      const content = document.getElementById('lessonContent');
-      const tocList = document.getElementById('tocList');
-      if (!content || !tocList) return;
-      const headings = content.querySelectorAll('h2, h3');
-      if (!headings.length) {
-        tocList.innerHTML = '<li><span class="toc-empty">No sections found</span></li>';
-        return;
+(function () {
+  /* ---- TOC Auto-generation from H2/H3/H4 ---- */
+  document.addEventListener('DOMContentLoaded', function () {
+    var content = document.getElementById('lessonContent');
+    var tocList = document.getElementById('tocList');
+    if (!content || !tocList) return;
+
+    var headings = content.querySelectorAll('h2, h3, h4');
+    if (!headings.length) {
+      tocList.innerHTML = '<li><span class="toc-empty">No sections found</span></li>';
+      return;
+    }
+
+    tocList.innerHTML = '';
+    headings.forEach(function (h) {
+      if (!h.id) {
+        h.id = h.textContent
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .slice(0, 60) || ('section-' + Math.random().toString(36).slice(2, 7));
+        // ensure uniqueness
+        if (document.querySelectorAll('#' + h.id).length > 1) {
+          h.id = h.id + '-' + Math.random().toString(36).slice(2, 5);
+        }
       }
-      tocList.innerHTML = '';
-      headings.forEach(function (h, i) {
-        if (!h.id) h.id = 'section-' + i;
-        const li = document.createElement('li');
-        li.className = h.tagName === 'H3' ? 'toc-sub' : '';
-        const a = document.createElement('a');
-        a.href = '#' + h.id;
-        a.textContent = h.textContent;
-        li.appendChild(a);
-        tocList.appendChild(li);
-      });
+      var li = document.createElement('li');
+      if (h.tagName === 'H3') li.className = 'toc-sub';
+      if (h.tagName === 'H4') li.className = 'toc-sub toc-sub-2';
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      tocList.appendChild(li);
     });
-  })();
+
+    /* Re-attach IntersectionObserver to newly-generated headings */
+    var tocLinks = tocList.querySelectorAll('a[href^="#"]');
+    if (tocLinks.length) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(function (l) { l.classList.remove('toc-active'); });
+            var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
+            if (active) active.classList.add('toc-active');
+          }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+      headings.forEach(function (h) { observer.observe(h); });
+    }
+  });
+
+  /* ---- Bookmark Toggle ---- */
+  var bookmarkBtn = document.getElementById('bookmarkBtn');
+  if (bookmarkBtn) {
+    bookmarkBtn.addEventListener('click', function () {
+      var url = bookmarkBtn.dataset.url;
+      var csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
+      csrfToken = csrfToken ? csrfToken[1] : '';
+      fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var icon = bookmarkBtn.querySelector('i');
+        if (data.bookmarked) {
+          icon.className = 'fa-solid fa-bookmark';
+          bookmarkBtn.classList.add('bookmarked');
+          bookmarkBtn.title = 'Saved';
+          bookmarkBtn.setAttribute('aria-label', 'Remove bookmark');
+        } else {
+          icon.className = 'fa-regular fa-bookmark';
+          bookmarkBtn.classList.remove('bookmarked');
+          bookmarkBtn.title = 'Save lesson';
+          bookmarkBtn.setAttribute('aria-label', 'Bookmark this lesson');
+        }
+      })
+      .catch(function (e) { console.warn('Bookmark error:', e); });
+    });
+  }
+
+  /* ---- Reading Progress Tracking ---- */
+  {% if request.user.is_authenticated %}
+  var lessonContent = document.getElementById('lessonContent');
+  var progressFill = document.getElementById('lessonProgressFill');
+  var progressLabel = document.getElementById('progressLabel');
+  var progressContainer = document.getElementById('progressContainer');
+  var markCompleteBtn = document.getElementById('markCompleteBtn');
+  var lessonSlug = '{{ lesson.slug }}';
+  var progressUrl = '{% url "update_progress" %}';
+  var csrfToken = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var lastSent = -1;
+
+  function sendProgress(pct) {
+    if (pct === lastSent) return;
+    lastSent = pct;
+    fetch(progressUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ lesson_slug: lessonSlug, progress: pct }),
+    }).catch(function (e) { console.warn('Progress error:', e); });
+  }
+
+  if (lessonContent && progressFill) {
+    var debounceTimer;
+    function updateProgressDisplay() {
+      var contentTop = lessonContent.getBoundingClientRect().top + window.scrollY;
+      var contentBottom = contentTop + lessonContent.offsetHeight;
+      var windowBottom = window.scrollY + window.innerHeight;
+      var total = contentBottom - contentTop;
+      var pct = Math.min(100, Math.max(0, Math.round(((windowBottom - contentTop) / total) * 100)));
+
+      progressFill.style.width = pct + '%';
+      if (progressLabel) progressLabel.textContent = pct + '% read';
+      if (progressContainer) progressContainer.style.display = 'flex';
+      if (markCompleteBtn && pct >= 80) markCompleteBtn.style.display = 'inline-flex';
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () { sendProgress(pct); }, 5000);
+    }
+    window.addEventListener('scroll', updateProgressDisplay, { passive: true });
+    updateProgressDisplay();
+  }
+
+  if (markCompleteBtn) {
+    markCompleteBtn.addEventListener('click', function () {
+      sendProgress(100);
+      if (progressFill) progressFill.style.width = '100%';
+      if (progressFill) progressFill.classList.add('progress-complete');
+      if (progressLabel) progressLabel.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Completed';
+      markCompleteBtn.style.display = 'none';
+    });
+  }
+  {% endif %}
+})();
 </script>
 {% endblock %}

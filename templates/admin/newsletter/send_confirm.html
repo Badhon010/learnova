@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Send Campaign: {{ campaign.subject }}</h1>
+
+<div style="max-width:600px;margin-top:20px;">
+  <div style="background:#fef9c3;border:1px solid #fbbf24;border-radius:8px;padding:16px;margin-bottom:20px;">
+    <strong>⚠️ Warning:</strong> This will send the campaign to <strong>{{ subscriber_count }}</strong> active subscriber{{ subscriber_count|pluralize }}.
+    This action cannot be undone.
+  </div>
+
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:20px;">
+    <dl style="display:grid;grid-template-columns:140px 1fr;gap:8px 12px;margin:0;">
+      <dt style="font-weight:600;color:#6b7280;">Subject</dt>
+      <dd style="margin:0;">{{ campaign.subject }}</dd>
+      {% if campaign.preview_text %}
+      <dt style="font-weight:600;color:#6b7280;">Preview text</dt>
+      <dd style="margin:0;">{{ campaign.preview_text }}</dd>
+      {% endif %}
+      <dt style="font-weight:600;color:#6b7280;">Recipients</dt>
+      <dd style="margin:0;">{{ subscriber_count }} active subscriber{{ subscriber_count|pluralize }}</dd>
+    </dl>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:flex;gap:10px;">
+      <button type="submit"
+        style="background:#22c55e;color:#fff;padding:10px 22px;border:none;border-radius:6px;cursor:pointer;font-size:0.95rem;font-weight:600;">
+        ✓ Confirm Send
+      </button>
+      <a href="{% url 'admin:newsletter_newslettercampaign_changelist' %}"
+        style="padding:10px 22px;border:1px solid #d1d5db;border-radius:6px;text-decoration:none;font-size:0.95rem;color:#374151;">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

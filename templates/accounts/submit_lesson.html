@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static django_ckeditor_5 %}
+{% block title %}Submit a Lesson | Learnova{% endblock %}
+
+{% block extra_head %}
+{% ckeditor_5_media %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-pen-nib"></i> Submit a Lesson</h1>
+    <p>Your submission will be reviewed by an admin before it goes live.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:780px">
+      <div class="auth-card">
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" class="auth-form" novalidate>
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label">Lesson Title <span class="required">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Chapter <span class="required">*</span></label>
+              {{ form.chapter }}
+              {% if form.chapter.errors %}<span class="form-error">{{ form.chapter.errors.0 }}</span>{% endif %}
+              <span class="form-hint">{{ form.chapter.help_text }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Difficulty <span class="required">*</span></label>
+              {{ form.difficulty }}
+              {% if form.difficulty.errors %}<span class="form-error">{{ form.difficulty.errors.0 }}</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Summary <span class="required">*</span></label>
+            {{ form.summary }}
+            {% if form.summary.errors %}<span class="form-error">{{ form.summary.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.summary.help_text }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lesson Content <span class="required">*</span></label>
+            {{ form.content }}
+            {% if form.content.errors %}<span class="form-error">{{ form.content.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.content.help_text }}</span>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Video URL</label>
+              {{ form.video_url }}
+              {% if form.video_url.errors %}<span class="form-error">{{ form.video_url.errors.0 }}</span>{% endif %}
+              <span class="form-hint">{{ form.video_url.help_text }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reading Time (minutes)</label>
+              {{ form.reading_time }}
+              {% if form.reading_time.errors %}<span class="form-error">{{ form.reading_time.errors.0 }}</span>{% endif %}
+              <span class="form-hint">{{ form.reading_time.help_text }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" name="action" value="draft" class="btn btn-outline">
+              <i class="fa-solid fa-floppy-disk"></i> Save as Draft
+            </button>
+            <button type="submit" name="action" value="submit" class="btn btn-primary">
+              <i class="fa-solid fa-paper-plane"></i> Submit for Review
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
