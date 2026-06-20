@@ -44,8 +44,17 @@
           <ul class="quick-nav">
             <li><a href="{% url 'topics' %}"><i class="fa-solid fa-book"></i> Browse Topics</a></li>
             <li><a href="{% url 'saved_lessons' %}"><i class="fa-solid fa-bookmark"></i> Saved Lessons</a></li>
+            <li>
+              <a href="{% url 'notifications' %}">
+                <i class="fa-solid fa-bell"></i> Notifications
+                {% if unread_notif_count > 0 %}
+                <span class="count-badge count-badge-green">{{ unread_notif_count }}</span>
+                {% endif %}
+              </a>
+            </li>
             {% if profile.role == 'contributor' %}
-            <li><a href="{% url 'my_lessons' %}"><i class="fa-solid fa-pen-nib"></i> My Lessons</a></li>
+            <li><a href="{% url 'my_lessons' %}"><i class="fa-solid fa-pen-nib"></i> Contributor Hub</a></li>
+            <li><a href="{% url 'my_proposals' %}"><i class="fa-solid fa-lightbulb"></i> My Proposals</a></li>
             {% endif %}
             <li><a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> Home</a></li>
             <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a></li>
@@ -91,9 +100,18 @@
               <div class="stat-label">Lessons Completed</div>
             </div>
           </div>
+          {% if certificates %}
+          <div class="dashboard-stat-card">
+            <div class="stat-icon stat-icon-yellow"><i class="fa-solid fa-award"></i></div>
+            <div>
+              <div class="stat-number">{{ certificates|length }}</div>
+              <div class="stat-label">Certificates Earned</div>
+            </div>
+          </div>
+          {% endif %}
           {% if quizzes_completed %}
           <div class="dashboard-stat-card">
-            <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-question-circle"></i></div>
+            <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-circle-question"></i></div>
             <div>
               <div class="stat-number">{{ quizzes_completed }}</div>
               <div class="stat-label">Quizzes Done</div>
@@ -109,6 +127,32 @@
           {% endif %}
         </div>
 
+        <!-- Certificates -->
+        {% if certificates %}
+        <div class="dashboard-section">
+          <h2><i class="fa-solid fa-award"></i> My Certificates</h2>
+          <div class="certificates-grid">
+            {% for cert in certificates %}
+            <div class="certificate-card">
+              <div class="cert-card-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div class="cert-card-body">
+                <div class="cert-card-topic">{{ cert.topic.title }}</div>
+                <div class="cert-card-date">Earned {{ cert.issued_at|date:"M j, Y" }}</div>
+              </div>
+              <div class="cert-card-btns">
+                <a href="{{ cert.get_absolute_url }}" class="btn btn-sm btn-primary">
+                  <i class="fa-solid fa-eye"></i> View
+                </a>
+                <a href="{{ cert.get_verify_url }}" class="btn btn-sm btn-outline" title="Verify certificate">
+                  <i class="fa-solid fa-square-check"></i>
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
         <!-- Continue Learning -->
         {% if continue_learning %}
         <div class="dashboard-section">
@@ -116,12 +160,26 @@
           <div class="continue-learning-list">
             {% for item in continue_learning %}
             <div class="continue-lesson-card">
-              <a href="{{ item.lesson.get_absolute_url }}" class="continue-lesson-title">{{ item.lesson.title }}</a>
-              <span class="continue-lesson-meta">{{ item.lesson.chapter.topic.title }} / {{ item.lesson.chapter.title }}</span>
-              <div class="progress-bar-wrapper">
-                <div class="progress-bar-fill {% if item.is_complete %}progress-complete{% endif %}" style="width: {{ item.progress }}%"></div>
+              <div class="continue-lesson-info">
+                <a href="{{ item.lesson.get_absolute_url }}" class="continue-lesson-title">{{ item.lesson.title }}</a>
+                <span class="continue-lesson-meta">
+                  <i class="fa-solid fa-book"></i> {{ item.lesson.chapter.topic.title }}
+                  <span class="meta-sep">·</span>
+                  {{ item.lesson.chapter.title }}
+                </span>
               </div>
-              <span class="progress-label">{% if item.is_complete %}<i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Complete{% else %}{{ item.progress }}% read{% endif %}</span>
+              <div class="continue-lesson-progress">
+                <div class="progress-bar-wrapper">
+                  <div class="progress-bar-fill {% if item.is_complete %}progress-complete{% endif %}" style="width: {{ item.progress }}%"></div>
+                </div>
+                <span class="progress-label">
+                  {% if item.is_complete %}
+                    <i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Complete
+                  {% else %}
+                    {{ item.progress }}% read
+                  {% endif %}
+                </span>
+              </div>
             </div>
             {% endfor %}
           </div>
@@ -149,7 +207,10 @@
         <!-- Saved Lessons -->
         {% if bookmarks %}
         <div class="dashboard-section">
-          <h2><i class="fa-solid fa-bookmark"></i> Saved Lessons <a href="{% url 'saved_lessons' %}" class="view-all-link">View all</a></h2>
+          <h2>
+            <i class="fa-solid fa-bookmark"></i> Saved Lessons
+            <a href="{% url 'saved_lessons' %}" class="view-all-link">View all</a>
+          </h2>
           <ul class="quick-nav">
             {% for bm in bookmarks %}
             <li>
@@ -164,28 +225,38 @@
 
         <!-- Start Learning if no activity -->
         {% if not continue_learning and not recently_viewed %}
-        <div class="dashboard-section">
-          <h2><i class="fa-solid fa-rocket"></i> Start Learning</h2>
-          <p>Explore structured topics and lessons built for every skill level.</p>
-          <a href="{% url 'topics' %}" class="btn btn-primary">Browse All Topics <i class="fa-solid fa-arrow-right"></i></a>
+        <div class="dashboard-section empty-state-section">
+          <div class="empty-state">
+            <div class="empty-state-icon"><i class="fa-solid fa-rocket"></i></div>
+            <h3>Start your learning journey</h3>
+            <p>Explore structured topics and lessons built for every skill level.</p>
+            <a href="{% url 'topics' %}" class="btn btn-primary">
+              Browse All Topics <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
         </div>
         {% endif %}
 
+        <!-- Contributor Zone -->
         {% if profile.role == 'contributor' %}
         <div class="dashboard-section contributor-section">
           <h2><i class="fa-solid fa-pen-nib"></i> Contributor Zone</h2>
-          <p>As a contributor, you can submit new lessons and manage your existing submissions.</p>
+          <p>Manage your topics and chapters, write lessons, and propose new topics to grow the platform.</p>
           <div class="form-actions">
-            <a href="{% url 'submit_lesson' %}" class="btn btn-primary">
-              <i class="fa-solid fa-plus"></i> Submit a Lesson
+            <a href="{% url 'my_lessons' %}" class="btn btn-primary">
+              <i class="fa-solid fa-pen-nib"></i> Contributor Hub
             </a>
-            <a href="{% url 'my_lessons' %}" class="btn btn-outline">
-              <i class="fa-solid fa-list"></i> My Lessons
+            <a href="{% url 'submit_topic_proposal' %}" class="btn btn-outline">
+              <i class="fa-solid fa-lightbulb"></i> Propose a Topic
             </a>
-            <a href="/admin/" class="btn btn-outline">
-              <i class="fa-solid fa-shield-halved"></i> Admin Panel
+            <a href="{% url 'my_proposals' %}" class="btn btn-outline">
+              <i class="fa-solid fa-list-check"></i> My Proposals
             </a>
           </div>
+          <p style="margin-top:12px;font-size:0.83rem;color:var(--text-muted);">
+            <i class="fa-solid fa-circle-info"></i>
+            To add a lesson, go to <strong>My Topics &amp; Lessons</strong> → select your topic → manage a chapter → add a lesson.
+          </p>
         </div>
         {% endif %}
 

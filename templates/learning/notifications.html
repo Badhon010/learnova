@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Notifications | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-bell"></i> Notifications</h1>
+    <p>Your recent activity and updates.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="notif-page-wrapper">
+
+      <div class="notif-page-header">
+        <span class="notif-page-count">{{ notifications|length }} notification{{ notifications|length|pluralize }}</span>
+        {% if notifications %}
+        <form method="post" action="{% url 'notifications_mark_all_read' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline">
+            <i class="fa-solid fa-check-double"></i> Mark all as read
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      {% if notifications %}
+        <div class="notif-page-list">
+          {% for n in notifications %}
+          <div class="notif-page-item {% if not n.is_read %}notif-page-unread{% endif %}">
+            <span class="notif-page-icon notif-icon-{{ n.notif_type }}">
+              <i class="fa-solid fa-{{ n.icon }}"></i>
+            </span>
+            <div class="notif-page-body">
+              <div class="notif-page-title">
+                {% if n.url %}
+                  <a href="{{ n.url }}">{{ n.title }}</a>
+                {% else %}
+                  {{ n.title }}
+                {% endif %}
+                {% if not n.is_read %}<span class="notif-dot"></span>{% endif %}
+              </div>
+              <div class="notif-page-message">{{ n.message }}</div>
+              <div class="notif-page-time">{{ n.created_at|timesince }} ago</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fa-solid fa-bell-slash"></i></div>
+          <h3>No notifications yet</h3>
+          <p>When you earn certificates, get comments on your lessons, or receive updates — they'll appear here.</p>
+          <a href="{% url 'topics' %}" class="btn btn-primary">Start Learning</a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</section>
+{% endblock %}

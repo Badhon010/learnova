@@ -196,6 +196,148 @@
         </div>
         {% endif %}
 
+        <!-- Rating Section -->
+        <div class="ratings-section" id="ratingsSection">
+          <div class="ratings-card">
+            <h2><i class="fa-solid fa-star"></i> Rate This Lesson</h2>
+            <div class="ratings-summary">
+              {% if avg_rating %}
+              <div class="avg-rating-display">
+                <span class="avg-rating-number">{{ avg_rating }}</span>
+                <div class="stars-display">
+                  {% for i in "12345" %}
+                    {% with i_int=forloop.counter %}
+                      <i class="fa-{% if avg_rating >= i_int %}solid{% elif avg_rating >= i_int|add:"-0.5" %}solid{% else %}regular{% endif %} fa-star" style="color:{% if avg_rating >= i_int %}#f59e0b{% else %}#d1d5db{% endif %}"></i>
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+                <span class="rating-count">{{ rating_count }} rating{{ rating_count|pluralize }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if request.user.is_authenticated %}
+            <form id="ratingForm" data-url="{% url 'rate_lesson' lesson.slug %}">
+              {% csrf_token %}
+              <div class="star-picker" id="starPicker" aria-label="Rate this lesson from 1 to 5 stars">
+                {% for i in "12345" %}
+                <button type="button" class="star-btn {% if user_rating >= forloop.counter %}selected{% endif %}"
+                  data-value="{{ forloop.counter }}" aria-label="{{ forloop.counter }} star">
+                  <i class="fa-{% if user_rating >= forloop.counter %}solid{% else %}regular{% endif %} fa-star"></i>
+                </button>
+                {% endfor %}
+              </div>
+              <span id="ratingFeedback" class="rating-feedback">
+                {% if user_rating %}Your rating: {{ user_rating }}/5{% else %}Click a star to rate{% endif %}
+              </span>
+            </form>
+            {% else %}
+            <p class="login-prompt"><a href="{% url 'login' %}?next={{ request.path }}">Sign in</a> to rate this lesson.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section" id="comments">
+          <h2><i class="fa-solid fa-comments"></i> Discussion
+            <span class="comment-count-badge">{{ comment_count }}</span>
+          </h2>
+
+          {% if request.user.is_authenticated %}
+          <form id="commentForm" class="comment-form" data-url="{% url 'add_comment' lesson.slug %}">
+            {% csrf_token %}
+            <div class="comment-form-inner">
+              <div class="comment-avatar">
+                {% if request.user.profile.avatar %}
+                  <img src="{{ request.user.profile.avatar.url }}" alt="You" />
+                {% else %}
+                  <div class="avatar-placeholder">{{ request.user.username|first|upper }}</div>
+                {% endif %}
+              </div>
+              <div class="comment-input-wrap">
+                <textarea name="content" id="commentContent" class="comment-textarea" placeholder="Share your thoughts, ask a question, or help others..." rows="3" maxlength="5000"></textarea>
+                <div class="comment-form-actions">
+                  <span class="char-counter" id="commentCharCount">0 / 5000</span>
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-paper-plane"></i> Post Comment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+          {% else %}
+          <p class="login-prompt"><a href="{% url 'login' %}?next={{ request.path }}#comments">Sign in</a> to join the discussion.</p>
+          {% endif %}
+
+          <div class="comments-list" id="commentsList">
+            {% for comment in comments %}
+            <div class="comment-item" id="comment-{{ comment.id }}" data-comment-id="{{ comment.id }}">
+              <div class="comment-avatar">
+                {% if comment.user.profile.avatar %}
+                  <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.username }}" />
+                {% else %}
+                  <div class="avatar-placeholder">{{ comment.user.username|first|upper }}</div>
+                {% endif %}
+              </div>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <span class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+                  <span class="comment-date">{{ comment.created_at|timesince }} ago</span>
+                  {% if request.user.is_authenticated and comment.user == request.user or request.user.is_staff %}
+                  <button class="delete-btn" data-url="{% url 'delete_comment' comment.id %}" data-target="#comment-{{ comment.id }}" aria-label="Delete comment">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                  {% endif %}
+                </div>
+                <div class="comment-content">{{ comment.content|linebreaksbr }}</div>
+
+                <!-- Replies -->
+                <div class="replies-list" id="replies-{{ comment.id }}">
+                  {% for reply in comment.replies.all %}
+                  <div class="reply-item" id="reply-{{ reply.id }}">
+                    <div class="comment-avatar comment-avatar-sm">
+                      {% if reply.user.profile.avatar %}
+                        <img src="{{ reply.user.profile.avatar.url }}" alt="{{ reply.user.username }}" />
+                      {% else %}
+                        <div class="avatar-placeholder avatar-placeholder-sm">{{ reply.user.username|first|upper }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="comment-body">
+                      <div class="comment-header">
+                        <span class="comment-author">{{ reply.user.get_full_name|default:reply.user.username }}</span>
+                        <span class="comment-date">{{ reply.created_at|timesince }} ago</span>
+                        {% if request.user.is_authenticated and reply.user == request.user or request.user.is_staff %}
+                        <button class="delete-btn" data-url="{% url 'delete_reply' reply.id %}" data-target="#reply-{{ reply.id }}" aria-label="Delete reply">
+                          <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        {% endif %}
+                      </div>
+                      <div class="comment-content">{{ reply.content|linebreaksbr }}</div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+
+                {% if request.user.is_authenticated %}
+                <button class="reply-toggle-btn" data-comment-id="{{ comment.id }}">
+                  <i class="fa-solid fa-reply"></i> Reply
+                </button>
+                <form class="reply-form" id="replyForm-{{ comment.id }}" data-url="{% url 'add_reply' comment.id %}" style="display:none;">
+                  {% csrf_token %}
+                  <textarea name="content" class="comment-textarea reply-textarea" placeholder="Write a reply..." rows="2" maxlength="2000"></textarea>
+                  <div class="comment-form-actions">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-paper-plane"></i> Reply</button>
+                    <button type="button" class="btn btn-sm btn-outline cancel-reply" data-comment-id="{{ comment.id }}">Cancel</button>
+                  </div>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% empty %}
+            <p class="comments-empty" id="commentsEmpty">No comments yet. Be the first to start the discussion!</p>
+            {% endfor %}
+          </div>
+        </div>
+
         <!-- Prev / Next Navigation -->
         <nav class="lesson-navigation" aria-label="Lesson navigation">
           <div class="lesson-nav-prev">
@@ -250,6 +392,187 @@
 {% block extra_scripts %}
 <script>
 (function () {
+
+  /* ---- Star Rating ---- */
+  var starBtns = document.querySelectorAll('.star-btn');
+  var ratingForm = document.getElementById('ratingForm');
+  var ratingFeedback = document.getElementById('ratingFeedback');
+  var currentRating = {% if user_rating %}{{ user_rating }}{% else %}0{% endif %};
+
+  function setStars(n, cls) {
+    starBtns.forEach(function (btn, i) {
+      btn.classList.remove('selected', 'hovered');
+      var icon = btn.querySelector('i');
+      if (i < n) {
+        btn.classList.add(cls);
+        icon.className = 'fa-solid fa-star';
+      } else {
+        icon.className = 'fa-regular fa-star';
+      }
+    });
+  }
+
+  starBtns.forEach(function (btn) {
+    btn.addEventListener('mouseenter', function () {
+      setStars(parseInt(btn.dataset.value), 'hovered');
+    });
+    btn.addEventListener('mouseleave', function () {
+      setStars(currentRating, 'selected');
+    });
+    btn.addEventListener('click', function () {
+      var val = parseInt(btn.dataset.value);
+      if (!ratingForm) return;
+      var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+      var formData = new FormData();
+      formData.append('rating', val);
+      formData.append('csrfmiddlewaretoken', csrf);
+      fetch(ratingForm.dataset.url, { method: 'POST', credentials: 'same-origin', body: formData })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            currentRating = data.user_rating;
+            setStars(currentRating, 'selected');
+            if (ratingFeedback) ratingFeedback.textContent = 'Your rating: ' + data.user_rating + '/5  \u2713';
+          }
+        })
+        .catch(function (e) { console.warn('Rating error:', e); });
+    });
+  });
+
+  /* ---- Add Comment ---- */
+  var commentForm = document.getElementById('commentForm');
+  var commentContent = document.getElementById('commentContent');
+  var commentCharCount = document.getElementById('commentCharCount');
+  var commentsList = document.getElementById('commentsList');
+  var commentsEmpty = document.getElementById('commentsEmpty');
+
+  if (commentContent && commentCharCount) {
+    commentContent.addEventListener('input', function () {
+      commentCharCount.textContent = commentContent.value.length + ' / 5000';
+    });
+  }
+
+  if (commentForm) {
+    commentForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+      var formData = new FormData();
+      formData.append('content', commentContent.value);
+      formData.append('csrfmiddlewaretoken', csrf);
+      fetch(commentForm.dataset.url, { method: 'POST', credentials: 'same-origin', body: formData })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            commentContent.value = '';
+            if (commentCharCount) commentCharCount.textContent = '0 / 5000';
+            if (commentsEmpty) commentsEmpty.remove();
+            var c = data.comment;
+            var initial = c.username ? c.username[0].toUpperCase() : '?';
+            var html = '<div class="comment-item" id="comment-' + c.id + '" data-comment-id="' + c.id + '">'
+              + '<div class="comment-avatar">'
+              + (c.avatar
+                ? '<img src="' + c.avatar + '" alt="You" />'
+                : '<div class="avatar-placeholder">' + initial + '</div>')
+              + '</div>'
+              + '<div class="comment-body">'
+              + '<div class="comment-header"><span class="comment-author">' + c.username + '</span>'
+              + '<span class="comment-date">' + c.created_at + '</span>'
+              + '<button class="delete-btn" data-url="/comments/' + c.id + '/delete/" data-target="#comment-' + c.id + '" aria-label="Delete comment"><i class="fa-solid fa-trash-can"></i></button>'
+              + '</div>'
+              + '<div class="comment-content">' + c.content.replace(/\n/g, '<br>') + '</div>'
+              + '</div></div>';
+            if (commentsList) commentsList.insertAdjacentHTML('beforeend', html);
+            bindDeleteBtns();
+            var badge = document.querySelector('.comment-count-badge');
+            if (badge) badge.textContent = parseInt(badge.textContent || '0') + 1;
+          } else {
+            alert(data.error || 'Could not post comment.');
+          }
+        })
+        .catch(function (e) { console.warn('Comment error:', e); });
+    });
+  }
+
+  /* ---- Reply Toggle ---- */
+  function bindReplyToggles() {
+    document.querySelectorAll('.reply-toggle-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cid = btn.dataset.commentId;
+        var form = document.getElementById('replyForm-' + cid);
+        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+    document.querySelectorAll('.cancel-reply').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cid = btn.dataset.commentId;
+        var form = document.getElementById('replyForm-' + cid);
+        if (form) form.style.display = 'none';
+      });
+    });
+    document.querySelectorAll('.reply-form').forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+        var textarea = form.querySelector('textarea');
+        var formData = new FormData();
+        formData.append('content', textarea.value);
+        formData.append('csrfmiddlewaretoken', csrf);
+        fetch(form.dataset.url, { method: 'POST', credentials: 'same-origin', body: formData })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              textarea.value = '';
+              form.style.display = 'none';
+              var r = data.reply;
+              var initial = r.username ? r.username[0].toUpperCase() : '?';
+              var html = '<div class="reply-item" id="reply-' + r.id + '">'
+                + '<div class="comment-avatar comment-avatar-sm">'
+                + (r.avatar
+                  ? '<img src="' + r.avatar + '" alt="' + r.username + '" />'
+                  : '<div class="avatar-placeholder avatar-placeholder-sm">' + initial + '</div>')
+                + '</div>'
+                + '<div class="comment-body">'
+                + '<div class="comment-header"><span class="comment-author">' + r.username + '</span>'
+                + '<span class="comment-date">' + r.created_at + '</span>'
+                + '<button class="delete-btn" data-url="/replies/' + r.id + '/delete/" data-target="#reply-' + r.id + '" aria-label="Delete reply"><i class="fa-solid fa-trash-can"></i></button>'
+                + '</div>'
+                + '<div class="comment-content">' + r.content.replace(/\n/g, '<br>') + '</div>'
+                + '</div></div>';
+              var repliesContainer = form.closest('.comment-body').querySelector('.replies-list');
+              if (repliesContainer) { repliesContainer.insertAdjacentHTML('beforeend', html); bindDeleteBtns(); }
+            } else {
+              alert(data.error || 'Could not post reply.');
+            }
+          });
+      });
+    });
+  }
+
+  /* ---- Delete (comment / reply) ---- */
+  function bindDeleteBtns() {
+    document.querySelectorAll('.delete-btn').forEach(function (btn) {
+      if (btn._bound) return;
+      btn._bound = true;
+      btn.addEventListener('click', function () {
+        if (!confirm('Delete this message?')) return;
+        var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+        var formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrf);
+        fetch(btn.dataset.url, { method: 'POST', credentials: 'same-origin', body: formData })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var target = document.querySelector(btn.dataset.target);
+              if (target) target.remove();
+            }
+          });
+      });
+    });
+  }
+
+  bindDeleteBtns();
+  bindReplyToggles();
+
   /* ---- TOC Auto-generation from H2/H3/H4 ---- */
   document.addEventListener('DOMContentLoaded', function () {
     var content = document.getElementById('lessonContent');
@@ -345,6 +668,8 @@
   var progressUrl = '{% url "update_progress" %}';
   var csrfToken = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
   var lastSent = -1;
+  /* Track maximum reading progress — never decrease */
+  var maxProgress = {% if user_progress %}{{ user_progress.progress_pct }}{% else %}0{% endif %};
 
   function sendProgress(pct) {
     if (pct === lastSent) return;
@@ -364,7 +689,13 @@
       var contentBottom = contentTop + lessonContent.offsetHeight;
       var windowBottom = window.scrollY + window.innerHeight;
       var total = contentBottom - contentTop;
-      var pct = Math.min(100, Math.max(0, Math.round(((windowBottom - contentTop) / total) * 100)));
+      var rawPct = Math.min(100, Math.max(0, Math.round(((windowBottom - contentTop) / total) * 100)));
+
+      /* Only advance — never go backwards */
+      if (rawPct > maxProgress) {
+        maxProgress = rawPct;
+      }
+      var pct = maxProgress;
 
       progressFill.style.width = pct + '%';
       if (progressLabel) progressLabel.textContent = pct + '% read';

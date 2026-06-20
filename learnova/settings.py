@@ -209,6 +209,9 @@ UNFOLD = {
                 "items": [
                     {"title": "Users", "icon": "person", "link": "/admin/auth/user/"},
                     {"title": "User Profiles", "icon": "manage_accounts", "link": "/admin/accounts/userprofile/"},
+                    {"title": "Comments", "icon": "forum", "link": "/admin/learning/lessoncomment/"},
+                    {"title": "Ratings", "icon": "star", "link": "/admin/learning/lessonrating/"},
+                    {"title": "Certificates", "icon": "workspace_premium", "link": "/admin/learning/certificate/"},
                     {"title": "Subscribers", "icon": "mail", "link": "/admin/core/newslettersubscriber/"},
                     {"title": "Contact Messages", "icon": "chat", "link": "/admin/core/contactmessage/"},
                 ],

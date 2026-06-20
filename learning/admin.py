@@ -5,7 +5,11 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from unfold.admin import ModelAdmin, TabularInline
-from .models import Topic, Chapter, Lesson, UserLessonProgress, LessonBookmark, RecentlyViewed
+from .models import (
+    Topic, Chapter, Lesson, UserLessonProgress, LessonBookmark, RecentlyViewed,
+    LessonComment, CommentReply, LessonRating, Certificate,
+    Notification, TopicProposal,
+)
 
 
 class ChapterInline(TabularInline):
@@ -29,21 +33,28 @@ class TopicAdmin(ModelAdmin):
     compressed_fields = True
 
     list_display = [
-        'title', 'icon_preview', 'order', 'featured',
-        'is_published', 'created_at', 'updated_at',
+        'title', 'icon_preview', 'status', 'order', 'featured',
+        'is_published', 'owner', 'created_at',
     ]
-    list_filter = ['is_published', 'featured', 'created_at']
-    list_editable = ['featured', 'is_published']
-    search_fields = ['title', 'description', 'meta_title']
+    list_filter = ['status', 'is_published', 'featured', 'created_at']
+    list_editable = ['featured']
+    search_fields = ['title', 'description', 'meta_title', 'owner__username']
     prepopulated_fields = {'slug': ('title',)}
     ordering = ['order', 'title']
     inlines = [ChapterInline]
     list_per_page = 20
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'submitted_for_review_at', 'reviewed_at', 'reviewed_by']
 
     fieldsets = (
         (None, {
-            'fields': ('title', 'slug', 'description', 'order', 'is_published', 'featured'),
+            'fields': ('title', 'slug', 'description', 'order', 'is_published', 'featured', 'owner'),
+        }),
+        ('Publication Workflow', {
+            'fields': ('status', 'review_notes', 'submitted_for_review_at', 'reviewed_at', 'reviewed_by'),
+            'description': (
+                'Topic status is managed by the contributor workflow. '
+                'Use the staff review queue at <code>/review/</code> to approve or reject topics.'
+            ),
         }),
         ('Icon Styling', {
             'fields': ('icon_html',),
@@ -127,7 +138,6 @@ class LessonAdmin(ModelAdmin):
     ordering = ['chapter__topic__title', 'chapter__order', 'order']
     list_per_page = 20
     readonly_fields = ['created_at', 'updated_at', 'published_at']
-    actions = ['publish_lessons', 'reject_lessons']
 
     fieldsets = (
         ('Lesson Identity', {
@@ -137,7 +147,7 @@ class LessonAdmin(ModelAdmin):
             ),
         }),
         ('Publication Status', {
-            'fields': ('status', 'submitted_by', 'rejection_note', 'published_at'),
+            'fields': ('status', 'submitted_by', 'published_at'),
         }),
         ('Classification Parameters', {
             'fields': ('difficulty', 'featured'),
@@ -164,9 +174,7 @@ class LessonAdmin(ModelAdmin):
     def status_badge(self, obj):
         colors = {
             'draft': '#6b7280',
-            'pending_review': '#f59e0b',
             'published': '#22c55e',
-            'rejected': '#ef4444',
         }
         color = colors.get(obj.status, '#6b7280')
         label = obj.get_status_display()
@@ -175,63 +183,122 @@ class LessonAdmin(ModelAdmin):
             color, label
         )
 
-    @admin.action(description='Publish selected lessons')
-    def publish_lessons(self, request, queryset):
-        count = 0
-        for lesson in queryset:
-            lesson.publish()
-            count += 1
-        self.message_user(request, f'{count} lesson(s) published.', messages.SUCCESS)
 
-    @admin.action(description='Reject selected lessons')
-    def reject_lessons(self, request, queryset):
+@admin.register(TopicProposal)
+class TopicProposalAdmin(ModelAdmin):
+    compressed_fields = True
+
+    list_display = [
+        'title', 'submitted_by', 'status_badge', 'created_at', 'updated_at',
+    ]
+    list_filter = ['status', 'created_at']
+    search_fields = ['title', 'description', 'submitted_by__username']
+    readonly_fields = ['submitted_by', 'status', 'created_at', 'updated_at', 'approved_topic']
+    ordering = ['-created_at']
+    list_per_page = 20
+    actions = ['approve_proposals', 'reject_proposals']
+
+    fieldsets = (
+        (None, {
+            'fields': ('submitted_by', 'title', 'description', 'icon_html'),
+        }),
+        ('Review', {
+            'fields': ('status', 'rejection_note', 'approved_topic'),
+            'description': (
+                '<strong>⚠ Status is read-only.</strong> '
+                'Use the <em>Approve</em> or <em>Reject</em> actions to change proposal status. '
+                'Manual status edits are blocked to prevent orphaned approvals.'
+            ),
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    @admin.display(description='Status')
+    def status_badge(self, obj):
+        colors = {
+            'draft': '#6b7280',
+            'pending_review': '#f59e0b',
+            'approved': '#22c55e',
+            'rejected': '#ef4444',
+        }
+        color = colors.get(obj.status, '#6b7280')
+        return format_html(
+            '<span style="background:{};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.78rem;">{}</span>',
+            color, obj.get_status_display()
+        )
+
+    @admin.action(description='Approve selected topic proposals')
+    def approve_proposals(self, request, queryset):
         count = 0
-        for lesson in queryset:
-            lesson.reject()
+        for proposal in queryset.filter(status='pending_review'):
+            proposal.approve()
             count += 1
-        self.message_user(request, f'{count} lesson(s) rejected.', messages.SUCCESS)
+        self.message_user(request, f'{count} proposal(s) approved and topics created.', messages.SUCCESS)
+
+    @admin.action(description='Reject selected topic proposals')
+    def reject_proposals(self, request, queryset):
+        count = 0
+        for proposal in queryset.filter(status='pending_review'):
+            proposal.reject(note='Not approved at this time.')
+            count += 1
+        self.message_user(request, f'{count} proposal(s) rejected.', messages.SUCCESS)
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('review/', self.admin_site.admin_view(self.review_lessons_view), name='lesson-review'),
-            path('review/<int:pk>/approve/', self.admin_site.admin_view(self.approve_lesson_view), name='lesson-approve'),
-            path('review/<int:pk>/reject/', self.admin_site.admin_view(self.reject_lesson_view), name='lesson-reject'),
+            path('<int:pk>/approve/', self.admin_site.admin_view(self.approve_view), name='topicproposal-approve'),
+            path('<int:pk>/reject/', self.admin_site.admin_view(self.reject_view), name='topicproposal-reject'),
         ]
         return custom_urls + urls
 
-    def review_lessons_view(self, request):
-        pending = Lesson.objects.filter(status='pending_review').select_related(
-            'chapter', 'chapter__topic', 'submitted_by'
-        ).order_by('created_at')
-        return render(request, 'admin/learning/lesson/review.html', {
-            'pending_lessons': pending,
-            'title': 'Review Pending Lessons',
-            'opts': self.model._meta,
-        })
-
-    def approve_lesson_view(self, request, pk):
+    def approve_view(self, request, pk):
         if request.method != 'POST':
             from django.http import HttpResponseNotAllowed
             return HttpResponseNotAllowed(['POST'])
-        lesson = Lesson.objects.get(pk=pk)
-        lesson.publish()
-        self.message_user(request, f'Lesson "{lesson.title}" has been published.', messages.SUCCESS)
-        return redirect('../')
+        proposal = TopicProposal.objects.get(pk=pk)
+        proposal.approve()
+        self.message_user(request, f'Proposal "{proposal.title}" approved and topic created.', messages.SUCCESS)
+        return redirect('../../')
 
-    def reject_lesson_view(self, request, pk):
+    def reject_view(self, request, pk):
         if request.method == 'POST':
-            lesson = Lesson.objects.get(pk=pk)
+            proposal = TopicProposal.objects.get(pk=pk)
             note = request.POST.get('rejection_note', '')
-            lesson.reject(note=note)
-            self.message_user(request, f'Lesson "{lesson.title}" has been rejected.', messages.SUCCESS)
-            return redirect('../')
-        lesson = Lesson.objects.get(pk=pk)
-        return render(request, 'admin/learning/lesson/reject_form.html', {
-            'lesson': lesson,
-            'title': 'Reject Lesson',
+            proposal.reject(note=note)
+            self.message_user(request, f'Proposal "{proposal.title}" rejected.', messages.SUCCESS)
+            return redirect('../../')
+        proposal = TopicProposal.objects.get(pk=pk)
+        return render(request, 'admin/learning/topicproposal/reject_form.html', {
+            'proposal': proposal,
+            'title': 'Reject Proposal',
             'opts': self.model._meta,
         })
+
+
+@admin.register(Notification)
+class NotificationAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'notif_type', 'title', 'is_read', 'created_at']
+    list_filter = ['notif_type', 'is_read', 'created_at']
+    search_fields = ['user__username', 'title', 'message']
+    readonly_fields = ['user', 'notif_type', 'title', 'message', 'url', 'created_at']
+    ordering = ['-created_at']
+    list_per_page = 30
+    actions = ['mark_read', 'mark_unread']
+
+    @admin.action(description='Mark selected as read')
+    def mark_read(self, request, queryset):
+        queryset.update(is_read=True)
+
+    @admin.action(description='Mark selected as unread')
+    def mark_unread(self, request, queryset):
+        queryset.update(is_read=False)
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(UserLessonProgress)
@@ -269,6 +336,90 @@ class RecentlyViewedAdmin(ModelAdmin):
     readonly_fields = ['user', 'lesson', 'viewed_at']
     ordering = ['-viewed_at']
     list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(LessonComment)
+class LessonCommentAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'lesson_link', 'content_preview', 'is_deleted', 'created_at']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['user__username', 'lesson__title', 'content']
+    readonly_fields = ['user', 'lesson', 'created_at']
+    ordering = ['-created_at']
+    list_per_page = 30
+    actions = ['mark_deleted', 'mark_restored']
+
+    def lesson_link(self, obj):
+        return format_html('<a href="{}">{}</a>', obj.lesson.get_absolute_url(), obj.lesson.title)
+    lesson_link.short_description = 'Lesson'
+
+    def content_preview(self, obj):
+        return obj.content[:80] + ('…' if len(obj.content) > 80 else '')
+    content_preview.short_description = 'Content'
+
+    @admin.action(description='Mark selected comments as deleted')
+    def mark_deleted(self, request, queryset):
+        queryset.update(is_deleted=True)
+
+    @admin.action(description='Restore selected comments')
+    def mark_restored(self, request, queryset):
+        queryset.update(is_deleted=False)
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(CommentReply)
+class CommentReplyAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'comment', 'content_preview', 'is_deleted', 'created_at']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['user__username', 'content']
+    readonly_fields = ['user', 'comment', 'created_at']
+    ordering = ['-created_at']
+    list_per_page = 30
+
+    def content_preview(self, obj):
+        return obj.content[:80] + ('…' if len(obj.content) > 80 else '')
+    content_preview.short_description = 'Content'
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(LessonRating)
+class LessonRatingAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'lesson', 'rating', 'created_at']
+    list_filter = ['rating', 'created_at']
+    search_fields = ['user__username', 'lesson__title']
+    readonly_fields = ['user', 'lesson', 'rating', 'created_at']
+    ordering = ['-created_at']
+    list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(Certificate)
+class CertificateAdmin(ModelAdmin):
+    compressed_fields = True
+    list_display = ['user', 'topic', 'issued_at', 'certificate_link']
+    list_filter = ['issued_at', 'topic']
+    search_fields = ['user__username', 'topic__title']
+    readonly_fields = ['user', 'topic', 'certificate_id', 'issued_at']
+    ordering = ['-issued_at']
+    list_per_page = 30
+
+    def certificate_link(self, obj):
+        return format_html(
+            '<a href="{}" target="_blank">View</a>',
+            obj.get_absolute_url(),
+        )
+    certificate_link.short_description = 'Certificate'
 
     def has_add_permission(self, request):
         return False

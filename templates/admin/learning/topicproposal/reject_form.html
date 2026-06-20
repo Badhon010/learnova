@@ -1,0 +1,13 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1>Reject Proposal: {{ proposal.title }}</h1>
+<form method="post">
+  {% csrf_token %}
+  <div style="margin-bottom:16px;">
+    <label for="rejection_note"><strong>Rejection note (shown to contributor):</strong></label><br>
+    <textarea name="rejection_note" id="rejection_note" rows="5" style="width:100%;max-width:600px;padding:8px;margin-top:6px;">{{ proposal.rejection_note }}</textarea>
+  </div>
+  <button type="submit" class="button">Reject Proposal</button>
+  <a href="../../" style="margin-left:12px;">Cancel</a>
+</form>
+{% endblock %}

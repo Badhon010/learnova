@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if editing %}Edit Chapter{% else %}Add Chapter{% endif %} | {{ topic.title }} | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1>
+      <i class="fa-solid fa-{% if editing %}pen{% else %}plus{% endif %}"></i>
+      {% if editing %}Edit Chapter{% else %}Add Chapter{% endif %}
+    </h1>
+    <p>
+      <a href="{% url 'my_lessons' %}" style="color:inherit;opacity:.7;">Contributor Hub</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      <a href="{% url 'manage_topic' topic.slug %}" style="color:inherit;opacity:.7;">{{ topic.title }}</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      {% if editing %}Edit Chapter{% else %}New Chapter{% endif %}
+    </p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:680px">
+      <div class="auth-card">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" class="auth-form" novalidate>
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label">Chapter Title <span class="required">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description <span class="required">*</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}<span class="form-error">{{ form.description.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Estimated Hours</label>
+              {{ form.estimated_hours }}
+              {% if form.estimated_hours.errors %}<span class="form-error">{{ form.estimated_hours.errors.0 }}</span>{% endif %}
+              <span class="form-hint">{{ form.estimated_hours.help_text }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Display Order</label>
+              {{ form.order }}
+              {% if form.order.errors %}<span class="form-error">{{ form.order.errors.0 }}</span>{% endif %}
+              <span class="form-hint">{{ form.order.help_text }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk"></i> {% if editing %}Save Changes{% else %}Create Chapter{% endif %}
+            </button>
+            <a href="{% url 'manage_topic' topic.slug %}" class="btn btn-outline">Cancel</a>
+            <a href="{% url 'my_lessons' %}" class="btn btn-ghost">
+              <i class="fa-solid fa-pen-nib"></i> Contributor Hub
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

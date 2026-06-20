@@ -1,119 +1,173 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}My Lessons | Learnova{% endblock %}
+{% block title %}Contributor Hub | Learnova{% endblock %}
 
 {% block content %}
 <div class="page-header page-header-sm">
   <div class="container">
-    <h1><i class="fa-solid fa-pen-nib"></i> My Lessons</h1>
-    <p>Manage your lesson submissions.</p>
+    <h1><i class="fa-solid fa-pen-nib"></i> Contributor Hub</h1>
+    <p>Manage your owned topics, chapters, and proposals.</p>
   </div>
 </div>
 
 <section class="section">
   <div class="container">
-    <div class="auth-container" style="max-width:900px">
 
-      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-        <a href="{% url 'submit_lesson' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Lesson</a>
-        <a href="{% url 'dashboard' %}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
-      </div>
-
-      <!-- Draft -->
-      <div class="my-lessons-group">
-        <h2 class="my-lessons-group-title">
-          <span class="status-pill status-draft">Draft</span>
-          <span class="count-badge">{{ drafts|length }}</span>
-        </h2>
-        {% if drafts %}
-        <div class="lesson-rows">
-          {% for lesson in drafts %}
-          <div class="lesson-row">
-            <div class="lesson-row-title">{{ lesson.title }}</div>
-            <div class="lesson-row-meta">{{ lesson.chapter }} &middot; {{ lesson.difficulty_label }}</div>
-            <div class="lesson-row-actions">
-              <a href="{% url 'lesson_edit' lesson.pk %}" class="btn btn-sm btn-outline"><i class="fa-solid fa-pen"></i> Edit</a>
-            </div>
-          </div>
-          {% endfor %}
+    <!-- Stats Row -->
+    <div class="contrib-stats-grid">
+      <div class="contrib-stat-card">
+        <div class="stat-icon stat-icon-green"><i class="fa-solid fa-layer-group"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.owned_topics }}</div>
+          <div class="stat-label">Owned Topics</div>
         </div>
-        {% else %}
-        <p class="empty-state-text">No drafts yet.</p>
-        {% endif %}
       </div>
-
-      <!-- Pending Review -->
-      <div class="my-lessons-group">
-        <h2 class="my-lessons-group-title">
-          <span class="status-pill status-pending">Pending Review</span>
-          <span class="count-badge">{{ pending|length }}</span>
-        </h2>
-        {% if pending %}
-        <div class="lesson-rows">
-          {% for lesson in pending %}
-          <div class="lesson-row">
-            <div class="lesson-row-title">{{ lesson.title }}</div>
-            <div class="lesson-row-meta">{{ lesson.chapter }} &middot; Submitted {{ lesson.updated_at|date:"M j, Y" }}</div>
-            <div class="lesson-row-actions">
-              <span class="btn btn-sm btn-outline" style="cursor:default;opacity:0.6"><i class="fa-solid fa-clock"></i> Awaiting</span>
-            </div>
-          </div>
-          {% endfor %}
+      <div class="contrib-stat-card">
+        <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-list"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.chapters_created }}</div>
+          <div class="stat-label">Chapters Created</div>
         </div>
-        {% else %}
-        <p class="empty-state-text">No lessons pending review.</p>
-        {% endif %}
       </div>
-
-      <!-- Published -->
-      <div class="my-lessons-group">
-        <h2 class="my-lessons-group-title">
-          <span class="status-pill status-published">Published</span>
-          <span class="count-badge">{{ published|length }}</span>
-        </h2>
-        {% if published %}
-        <div class="lesson-rows">
-          {% for lesson in published %}
-          <div class="lesson-row">
-            <div class="lesson-row-title">{{ lesson.title }}</div>
-            <div class="lesson-row-meta">{{ lesson.chapter }} &middot; {{ lesson.published_at|date:"M j, Y"|default:"N/A" }}</div>
-            <div class="lesson-row-actions">
-              <a href="{{ lesson.get_absolute_url }}" class="btn btn-sm btn-outline" target="_blank"><i class="fa-solid fa-eye"></i> View</a>
-            </div>
-          </div>
-          {% endfor %}
+      <div class="contrib-stat-card">
+        <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.proposals_pending }}</div>
+          <div class="stat-label">Proposals Pending</div>
         </div>
-        {% else %}
-        <p class="empty-state-text">No published lessons yet.</p>
-        {% endif %}
       </div>
-
-      <!-- Rejected -->
-      <div class="my-lessons-group">
-        <h2 class="my-lessons-group-title">
-          <span class="status-pill status-rejected">Rejected</span>
-          <span class="count-badge">{{ rejected|length }}</span>
-        </h2>
-        {% if rejected %}
-        <div class="lesson-rows">
-          {% for lesson in rejected %}
-          <div class="lesson-row">
-            <div class="lesson-row-title">{{ lesson.title }}</div>
-            {% if lesson.rejection_note %}
-            <div class="rejection-note"><i class="fa-solid fa-circle-exclamation"></i> {{ lesson.rejection_note }}</div>
-            {% endif %}
-            <div class="lesson-row-actions">
-              <a href="{% url 'lesson_edit' lesson.pk %}" class="btn btn-sm btn-outline"><i class="fa-solid fa-pen"></i> Revise</a>
-            </div>
-          </div>
-          {% endfor %}
+      <div class="contrib-stat-card">
+        <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.proposals_approved }}</div>
+          <div class="stat-label">Proposals Approved</div>
         </div>
-        {% else %}
-        <p class="empty-state-text">No rejected lessons.</p>
-        {% endif %}
       </div>
-
     </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- My Topics -->
+    <div class="contrib-section">
+      <div class="contrib-section-header">
+        <h2><i class="fa-solid fa-layer-group"></i> My Topics</h2>
+        <a href="{% url 'submit_topic_proposal' %}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> Propose a Topic
+        </a>
+      </div>
+
+      {% if owned_topics %}
+      <div class="topic-owner-grid">
+        {% for topic in owned_topics %}
+        <div class="topic-owner-card">
+          <div class="topic-owner-icon">{{ topic.icon_html|safe }}</div>
+          <div class="topic-owner-info">
+            <div class="topic-owner-title">{{ topic.title }}</div>
+            <div class="topic-owner-meta">
+              <span><i class="fa-solid fa-list"></i> {{ topic.chapter_count }} chapter{{ topic.chapter_count|pluralize }}</span>
+              <span><i class="fa-solid fa-file-lines"></i> {{ topic.lesson_count }} lesson{{ topic.lesson_count|pluralize }}</span>
+              {% if topic.published_lesson_count %}
+              <span style="color:#22c55e;"><i class="fa-solid fa-rocket"></i> {{ topic.published_lesson_count }} published</span>
+              {% endif %}
+              {% if topic.pending_lesson_count %}
+              <span style="color:#f59e0b;"><i class="fa-solid fa-clock"></i> {{ topic.pending_lesson_count }} pending</span>
+              {% endif %}
+              {% if topic.is_published %}
+              <span class="status-pill status-published"><i class="fa-solid fa-circle-check"></i> Published</span>
+              {% else %}
+              <span class="status-pill status-pending"><i class="fa-solid fa-clock"></i> Unpublished</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="topic-owner-actions">
+            <a href="{% url 'manage_topic' topic.slug %}" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-pen-to-square"></i> Manage
+            </a>
+            <a href="{% url 'create_chapter' topic.slug %}" class="btn btn-sm btn-outline">
+              <i class="fa-solid fa-plus"></i> Add Chapter
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state-inline">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>No owned topics yet. <a href="{% url 'submit_topic_proposal' %}">Propose a topic</a> to get started.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- My Proposals -->
+    <div class="contrib-section">
+      <div class="contrib-section-header">
+        <h2><i class="fa-solid fa-lightbulb"></i> My Topic Proposals</h2>
+        <a href="{% url 'my_proposals' %}" class="view-all-link">View all <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      {% if proposals %}
+      <div class="proposals-list proposals-list-compact">
+        {% for p in proposals|slice:":5" %}
+        <div class="proposal-card proposal-status-{{ p.status }}">
+          <div class="proposal-card-header">
+            <div class="proposal-icon">{{ p.icon_html|safe }}</div>
+            <div class="proposal-card-meta">
+              <div class="proposal-card-title">{{ p.title }}</div>
+              <div class="proposal-card-date">{{ p.created_at|date:"M j, Y" }}</div>
+            </div>
+            <span class="status-pill status-{{ p.status }}">
+              {% if p.status == 'draft' %}<i class="fa-solid fa-pen"></i>
+              {% elif p.status == 'pending_review' %}<i class="fa-solid fa-clock"></i>
+              {% elif p.status == 'approved' %}<i class="fa-solid fa-circle-check"></i>
+              {% else %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+              {{ p.get_status_display }}
+            </span>
+          </div>
+          {% if p.status == 'rejected' and p.rejection_note %}
+          <div class="rejection-note"><i class="fa-solid fa-circle-exclamation"></i> {{ p.rejection_note }}</div>
+          {% endif %}
+          {% if p.status == 'approved' and p.approved_topic %}
+          <div class="proposal-approved-link">
+            <i class="fa-solid fa-circle-check" style="color:var(--primary);"></i>
+            <strong>Topic approved!</strong>
+            <a href="{% url 'manage_topic' p.approved_topic.slug %}" style="margin-left:6px;">Start building: {{ p.approved_topic.title }}</a>
+          </div>
+          {% endif %}
+          <div class="proposal-card-actions">
+            {% if p.status == 'approved' and p.approved_topic %}
+            <a href="{% url 'manage_topic' p.approved_topic.slug %}" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-pen-to-square"></i> Manage Topic
+            </a>
+            {% elif p.status == 'draft' or p.status == 'rejected' %}
+            <a href="{% url 'edit_proposal' p.pk %}" class="btn btn-sm btn-outline">
+              <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state-inline">
+        <i class="fa-solid fa-lightbulb"></i>
+        <span>No proposals yet. <a href="{% url 'submit_topic_proposal' %}">Submit your first topic proposal.</a></span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="contrib-quick-actions">
+      <a href="{% url 'my_proposals' %}" class="btn btn-outline">
+        <i class="fa-solid fa-list-check"></i> All Proposals
+      </a>
+      <a href="{% url 'dashboard' %}" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-left"></i> Dashboard
+      </a>
+    </div>
+
   </div>
 </section>
 {% endblock %}

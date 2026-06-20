@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Review: {{ topic.title }} | Staff | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <a href="{% url 'staff_review_queue' %}" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Review Queue
+          </a>
+          <h1 style="margin:0;"><i class="fa-solid fa-magnifying-glass"></i> {{ topic.title }}</h1>
+        </div>
+        <p style="margin-top:8px;">
+          <span><i class="fa-solid fa-user"></i> {{ topic.owner.username|default:"Unknown" }}</span>
+          {% if topic.submitted_for_review_at %}
+          <span style="margin-left:12px;"><i class="fa-regular fa-calendar"></i> Submitted {{ topic.submitted_for_review_at|timesince }} ago</span>
+          {% endif %}
+          <span style="margin-left:12px;"><i class="fa-solid fa-list"></i> {{ chapters|length }} chapter{{ chapters|length|pluralize }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start;">
+
+      <!-- Topic Content -->
+      <main>
+        <!-- Topic Overview -->
+        <div class="sidebar-card" style="margin-bottom:24px;">
+          <h2 style="font-size:1.1rem;margin-bottom:12px;"><i class="fa-solid fa-layer-group"></i> Topic Overview</h2>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="font-size:2rem;">{{ topic.icon_html|safe }}</div>
+            <div>
+              <div style="font-weight:600;font-size:1.05rem;">{{ topic.title }}</div>
+              <div style="color:var(--text-secondary);font-size:.85rem;margin-top:4px;">{{ topic.description }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapters + Lessons -->
+        {% for chapter in chapters %}
+        <div class="sidebar-card" style="margin-bottom:20px;">
+          <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+            <span><i class="fa-solid fa-list" style="color:var(--primary);margin-right:8px;"></i>
+              Chapter {{ forloop.counter }}: {{ chapter.title }}
+            </span>
+            <span style="font-size:.8rem;color:var(--text-secondary);font-weight:400;">
+              {{ chapter.lesson_count }} lesson{{ chapter.lesson_count|pluralize }}
+              &bull; {{ chapter.estimated_hours }}h est.
+            </span>
+          </h3>
+          {% if chapter.description %}
+          <p style="font-size:.83rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">{{ chapter.description|truncatechars:200 }}</p>
+          {% endif %}
+
+          {% if chapter.lessons.all %}
+          <div class="lesson-rows">
+            {% for lesson in chapter.lessons.all %}
+            <div class="lesson-row" style="padding:10px 0;border-bottom:1px solid var(--border-color);">
+              <div class="lesson-row-info">
+                <div class="lesson-row-title" style="font-size:.9rem;">
+                  {{ forloop.counter }}. {{ lesson.title }}
+                </div>
+                <div class="lesson-row-meta" style="margin-top:4px;">
+                  <span class="difficulty-badge {{ lesson.difficulty_class }}">{{ lesson.difficulty_label }}</span>
+                  <span><i class="fa-regular fa-clock"></i> {{ lesson.reading_time }}min</span>
+                  {% if lesson.summary %}
+                  <span style="color:var(--text-secondary);font-size:.78rem;">{{ lesson.summary|truncatechars:80 }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p style="color:var(--text-secondary);font-size:.83rem;font-style:italic;">No lessons in this chapter.</p>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state-inline">
+          <i class="fa-solid fa-list"></i>
+          <span>No chapters found for this topic.</span>
+        </div>
+        {% endfor %}
+      </main>
+
+      <!-- Review Actions Sidebar -->
+      <aside style="position:sticky;top:24px;">
+        <!-- Approve -->
+        <div class="sidebar-card" style="margin-bottom:16px;border:2px solid #22c55e30;">
+          <h3 class="sidebar-title" style="color:#16a34a;"><i class="fa-solid fa-circle-check"></i> Approve &amp; Publish</h3>
+          <p style="font-size:.83rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">
+            Approve this topic to make it publicly visible. All chapters and lessons will be published automatically.
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="action" value="approve" class="btn btn-approve" style="width:100%;"
+              onclick="return confirm('Approve and publish \'{{ topic.title }}\'?\n\nThis will make the topic and all its lessons publicly visible.')">
+              <i class="fa-solid fa-rocket"></i> Approve &amp; Publish
+            </button>
+          </form>
+        </div>
+
+        <!-- Request Changes -->
+        <div class="sidebar-card" style="margin-bottom:16px;border:2px solid #f59e0b30;">
+          <h3 class="sidebar-title" style="color:#d97706;"><i class="fa-solid fa-pen-to-square"></i> Request Changes</h3>
+          <p style="font-size:.83rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">
+            Ask the contributor to make specific improvements before publishing.
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label" style="font-size:.83rem;">Notes for contributor <span class="required">*</span></label>
+              <textarea name="review_notes" class="comment-textarea" rows="3"
+                placeholder="Describe what changes are needed and why..."></textarea>
+            </div>
+            <button type="submit" name="action" value="request_changes" class="btn btn-sm btn-outline" style="width:100%;">
+              <i class="fa-solid fa-pen-to-square"></i> Request Changes
+            </button>
+          </form>
+        </div>
+
+        <!-- Reject -->
+        <div class="sidebar-card" style="border:2px solid #ef444430;">
+          <h3 class="sidebar-title" style="color:#dc2626;"><i class="fa-solid fa-circle-xmark"></i> Reject to Draft</h3>
+          <p style="font-size:.83rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">
+            Reject and move the topic back to draft. The contributor can revise and resubmit.
+          </p>
+          <button type="button" class="btn btn-sm btn-reject" style="width:100%;"
+            onclick="document.getElementById('reject-panel').style.display='block';this.style.display='none'">
+            <i class="fa-solid fa-circle-xmark"></i> Reject Topic
+          </button>
+          <div id="reject-panel" style="display:none;">
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group" style="margin-bottom:12px;">
+                <label class="form-label" style="font-size:.83rem;">Feedback for contributor (optional)</label>
+                <textarea name="review_notes" class="comment-textarea" rows="3"
+                  placeholder="Explain why this topic was rejected..."></textarea>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="submit" name="action" value="reject" class="btn btn-sm btn-reject" style="flex:1;"
+                  onclick="return confirm('Reject \'{{ topic.title }}\' and move it back to draft?')">
+                  Confirm Reject
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost"
+                  onclick="document.getElementById('reject-panel').style.display='none';document.querySelector('.btn-reject').style.display='block'">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Contributor Info -->
+        <div class="sidebar-card" style="margin-top:16px;">
+          <h3 class="sidebar-title"><i class="fa-solid fa-user"></i> Contributor</h3>
+          <div style="font-size:.83rem;color:var(--text-secondary);">
+            <div><strong>{{ topic.owner.get_full_name|default:topic.owner.username }}</strong></div>
+            <div>@{{ topic.owner.username }}</div>
+            {% if topic.owner.email %}<div>{{ topic.owner.email }}</div>{% endif %}
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

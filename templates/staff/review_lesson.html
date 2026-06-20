@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Review: {{ lesson.title }} | Staff | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+      <a href="{% url 'staff_review_queue' %}" class="btn btn-outline btn-sm">
+        <i class="fa-solid fa-arrow-left"></i> Review Queue
+      </a>
+      <span class="status-pill status-pending"><i class="fa-solid fa-clock"></i> Pending Review</span>
+    </div>
+    <h1>{{ lesson.title }}</h1>
+    <div class="review-card-meta" style="margin-top:8px;font-size:.85rem;">
+      <span><i class="fa-solid fa-layer-group"></i> {{ lesson.chapter.topic.title }}</span>
+      <span><i class="fa-solid fa-list"></i> {{ lesson.chapter.title }}</span>
+      <span><i class="fa-solid fa-user"></i> {{ lesson.submitted_by.username }}</span>
+      <span class="difficulty-badge badge-{{ lesson.difficulty }}">{{ lesson.difficulty_label }}</span>
+      <span><i class="fa-regular fa-clock"></i> {{ lesson.reading_time }}min read</span>
+      <span><i class="fa-regular fa-calendar"></i> Submitted {{ lesson.created_at|timesince }} ago</span>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="review-lesson-layout">
+
+      <!-- Main content -->
+      <main>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% if lesson.summary %}
+        <div class="review-summary-box">
+          <strong><i class="fa-solid fa-quote-left" style="color:var(--primary);"></i> Summary</strong>
+          <p style="margin:8px 0 0;color:var(--text-secondary);line-height:1.6;">{{ lesson.summary }}</p>
+        </div>
+        {% endif %}
+
+        {% if lesson.video_url %}
+        <div style="margin-bottom:20px;">
+          <a href="{{ lesson.video_url }}" target="_blank" class="btn btn-outline btn-sm">
+            <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> Watch Video
+          </a>
+        </div>
+        {% endif %}
+
+        <div class="lesson-content review-content-box">
+          {{ lesson.content|safe }}
+        </div>
+      </main>
+
+      <!-- Sidebar -->
+      <aside class="sidebar sidebar-right">
+        <!-- Action card -->
+        <div class="sidebar-card review-action-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-gavel"></i> Your Decision</h3>
+
+          <!-- Approve -->
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="action" value="approve" class="btn btn-approve w-full mb-2">
+              <i class="fa-solid fa-circle-check"></i> Approve & Publish
+            </button>
+          </form>
+
+          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+          <!-- Reject with note -->
+          <form method="post" id="reject-form">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label">Rejection Feedback</label>
+              <textarea name="rejection_note" class="comment-textarea" rows="4"
+                placeholder="Explain what the contributor needs to fix or improve..."></textarea>
+            </div>
+            <button type="submit" name="action" value="reject" class="btn btn-reject w-full">
+              <i class="fa-solid fa-circle-xmark"></i> Reject with Feedback
+            </button>
+          </form>
+        </div>
+
+        <!-- Contributor info -->
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-user"></i> Contributor</h3>
+          <div style="font-size:.88rem;display:flex;flex-direction:column;gap:6px;color:var(--text-secondary);">
+            <div><i class="fa-solid fa-at" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.username }}</div>
+            {% if lesson.submitted_by.get_full_name %}
+            <div><i class="fa-solid fa-id-card" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.get_full_name }}</div>
+            {% endif %}
+            <div><i class="fa-regular fa-envelope" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.email }}</div>
+          </div>
+          {% if other_lessons %}
+          <div style="margin-top:14px;">
+            <div class="form-hint" style="margin-bottom:8px;">Other published lessons:</div>
+            {% for ol in other_lessons %}
+            <a href="{{ ol.get_absolute_url }}" target="_blank"
+               style="display:block;font-size:.8rem;color:var(--primary);text-decoration:underline;margin-bottom:4px;">
+              {{ ol.title }}
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Lesson metadata -->
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-circle-info"></i> Details</h3>
+          <div style="font-size:.85rem;display:flex;flex-direction:column;gap:8px;color:var(--text-secondary);">
+            <div><i class="fa-solid fa-layer-group" style="width:16px;color:var(--primary);"></i> {{ lesson.chapter.topic.title }}</div>
+            <div><i class="fa-solid fa-list" style="width:16px;color:var(--primary);"></i> {{ lesson.chapter.title }}</div>
+            <div><i class="fa-solid fa-signal" style="width:16px;color:var(--primary);"></i> {{ lesson.difficulty_label }}</div>
+            <div><i class="fa-regular fa-clock" style="width:16px;color:var(--primary);"></i> {{ lesson.reading_time }} min read</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

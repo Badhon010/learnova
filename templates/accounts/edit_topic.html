@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Topic | {{ topic.title }} | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-pen"></i> Edit Topic</h1>
+    <p>
+      <a href="{% url 'my_lessons' %}" style="color:inherit;opacity:.7;">Contributor Hub</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      <a href="{% url 'manage_topic' topic.slug %}" style="color:inherit;opacity:.7;">{{ topic.title }}</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      Edit Topic
+    </p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:680px">
+      <div class="auth-card">
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" class="auth-form" novalidate>
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label">Topic Title <span class="required">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description <span class="required">*</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}<span class="form-error">{{ form.description.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Icon (optional)</label>
+            {{ form.icon_html }}
+            {% if form.icon_html.errors %}<span class="form-error">{{ form.icon_html.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.icon_html.help_text|safe }}</span>
+          </div>
+
+          <div style="padding:12px 16px;background:var(--warning-bg,#fffbeb);border:1px solid #fcd34d;border-radius:8px;margin-bottom:20px;font-size:.85rem;color:var(--text-secondary);">
+            <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i>
+            Topic ownership and published status can only be changed by admins.
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            </button>
+            <a href="{% url 'manage_topic' topic.slug %}" class="btn btn-outline">Cancel</a>
+            <a href="{% url 'my_lessons' %}" class="btn btn-ghost">
+              <i class="fa-solid fa-pen-nib"></i> Contributor Hub
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

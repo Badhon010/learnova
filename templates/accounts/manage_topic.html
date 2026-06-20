@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Manage {{ topic.title }} | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <div class="topic-owner-header">
+      <div class="topic-owner-icon-sm">{{ topic.icon_html|safe }}</div>
+      <div>
+        <h1>{{ topic.title }}</h1>
+        <p>
+          {% if topic.is_published %}
+          <span class="status-pill status-published"><i class="fa-solid fa-circle-check"></i> Published</span>
+          {% else %}
+          <span class="status-pill status-pending"><i class="fa-solid fa-clock"></i> Unpublished — admin will publish when ready</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <div class="manage-topic-layout">
+
+      <aside class="sidebar sidebar-left">
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-compass"></i> Actions</h3>
+          <ul class="quick-nav">
+            <li><a href="{% url 'create_chapter' topic.slug %}"><i class="fa-solid fa-plus"></i> Add Chapter</a></li>
+            <li><a href="{% url 'edit_topic' topic.slug %}"><i class="fa-solid fa-pen"></i> Edit Topic</a></li>
+            <li><a href="{{ topic.get_absolute_url }}"><i class="fa-solid fa-eye"></i> View Topic Page</a></li>
+            <li><a href="{% url 'my_lessons' %}"><i class="fa-solid fa-arrow-left"></i> Contributor Hub</a></li>
+          </ul>
+        </div>
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-circle-info"></i> About</h3>
+          <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.6;">{{ topic.description|truncatechars:200 }}</p>
+        </div>
+      </aside>
+
+      <main>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="contrib-section-header" style="margin-bottom:20px;">
+          <h2><i class="fa-solid fa-list"></i> Chapters
+            <span style="font-size:.85rem;font-weight:400;color:var(--text-secondary);margin-left:8px;">
+              {{ chapters|length }} chapter{{ chapters|length|pluralize }}
+            </span>
+          </h2>
+          <a href="{% url 'create_chapter' topic.slug %}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Add Chapter
+          </a>
+        </div>
+
+        {% if chapters %}
+        <div class="chapter-manage-list">
+          {% for chapter in chapters %}
+          <div class="chapter-manage-card">
+            <div class="chapter-manage-info">
+              <div class="chapter-manage-order">#{{ forloop.counter }}</div>
+              <div>
+                <div class="chapter-manage-title">{{ chapter.title }}</div>
+                <div class="chapter-manage-meta">
+                  <span><i class="fa-solid fa-file-lines"></i> {{ chapter.lessons_total }} lesson{{ chapter.lessons_total|pluralize }}</span>
+                  <span><i class="fa-regular fa-clock"></i> {{ chapter.estimated_hours }}h estimated</span>
+                  {% if chapter.is_published %}
+                  <span class="status-pill status-published" style="font-size:.72rem;padding:2px 8px;">Published</span>
+                  {% else %}
+                  <span class="status-pill status-pending" style="font-size:.72rem;padding:2px 8px;">Unpublished</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="chapter-manage-actions">
+              <a href="{% url 'manage_chapter' chapter.pk %}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-pen-to-square"></i> Manage
+              </a>
+              <a href="{% url 'edit_chapter' chapter.pk %}" class="btn btn-sm btn-outline">
+                <i class="fa-solid fa-pen"></i> Edit
+              </a>
+              <a href="{% url 'create_lesson_for_chapter' chapter.pk %}" class="btn btn-sm btn-outline">
+                <i class="fa-solid fa-plus"></i> Add Lesson
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fa-solid fa-list"></i></div>
+          <h3>No chapters yet</h3>
+          <p>Start building your topic by adding the first chapter.</p>
+          <a href="{% url 'create_chapter' topic.slug %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add First Chapter
+          </a>
+        </div>
+        {% endif %}
+
+      </main>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -85,10 +85,11 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   width: 100%; max-width: 580px;
+  max-height: 90%;
   margin: 0 20px;
   transform: translateY(-12px);
   transition: transform 0.18s ease;
-  overflow: hidden;
+  overflow: auto;
 }
 .search-modal-overlay.open .search-modal-box { transform: translateY(0); }
 
@@ -148,3 +149,88 @@
 .search-input::placeholder { color: var(--text-muted); }
 .search-btn { padding: 7px 12px; color: var(--text-muted); background: none; border: none; cursor: pointer; transition: color var(--transition); }
 .search-btn:hover { color: var(--primary); }
+
+/* ============================================================
+   Notification Bell & Dropdown
+   ============================================================ */
+.notif-bell-wrapper { position: relative; }
+.notif-bell-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text); font-size: 1.1rem;
+  padding: 6px 8px; border-radius: 8px; position: relative;
+  transition: background 0.15s; display: flex; align-items: center;
+}
+.notif-bell-btn:hover { background: var(--border); }
+.notif-badge {
+  position: absolute; top: 2px; right: 2px;
+  background: #ef4444; color: #fff;
+  font-size: 0.65rem; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px; line-height: 1; pointer-events: none;
+}
+.notif-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 340px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.14); z-index: 2000; overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateY(-8px);
+  transition: opacity 0.18s, transform 0.18s;
+}
+.notif-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+.notif-dropdown-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 10px; border-bottom: 1px solid var(--border);
+}
+.notif-dropdown-title { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.notif-mark-all-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--primary); font-size: 0.85rem;
+  padding: 4px 8px; border-radius: 6px; transition: background 0.15s;
+}
+.notif-mark-all-btn:hover { background: var(--border); }
+.notif-dropdown-list { max-height: 340px; overflow-y: auto; }
+.notif-dropdown-footer { padding: 10px 16px; border-top: 1px solid var(--border); text-align: center; }
+.notif-dropdown-footer a { font-size: 0.83rem; color: var(--primary); text-decoration: none; font-weight: 600; }
+.notif-dropdown-footer a:hover { text-decoration: underline; }
+.notif-loading, .notif-empty {
+  padding: 32px 16px; text-align: center; color: var(--text-muted);
+  font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.notif-empty i { font-size: 1.6rem; opacity: .5; }
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; text-decoration: none; color: var(--text);
+  border-bottom: 1px solid var(--border); transition: background 0.12s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--bg-secondary); }
+.notif-item.notif-unread { background: var(--primary-muted, rgba(34,197,94,.06)); }
+.notif-item-icon {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; flex-shrink: 0; margin-top: 2px;
+}
+.notif-icon-lesson_approved .notif-item-icon,
+.notif-icon-topic_proposal_approved .notif-item-icon,
+.notif-icon-certificate_earned .notif-item-icon { background: #dcfce7; color: #16a34a; }
+.notif-icon-lesson_rejected .notif-item-icon,
+.notif-icon-topic_proposal_rejected .notif-item-icon { background: #fee2e2; color: #dc2626; }
+.notif-icon-new_comment .notif-item-icon { background: #dbeafe; color: #2563eb; }
+.notif-icon-quiz_passed .notif-item-icon { background: #fef3c7; color: #d97706; }
+.notif-icon-lesson_approved,
+.notif-icon-topic_proposal_approved,
+.notif-icon-certificate_earned { color: #16a34a; }
+.notif-icon-lesson_rejected,
+.notif-icon-topic_proposal_rejected { color: #dc2626; }
+.notif-icon-new_comment { color: #2563eb; }
+.notif-icon-quiz_passed { color: #d97706; }
+.notif-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notif-item-title {
+  font-size: 0.83rem; font-weight: 600; color: var(--text);
+  line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.notif-item-time { font-size: 0.74rem; color: var(--text-muted); }
+@media (max-width: 640px) {
+  .notif-dropdown { width: calc(100vw - 32px); right: -80px; }
+}

@@ -1,3 +1,4 @@
+from django_ckeditor_5.widgets import CKEditor5Widget
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
@@ -72,22 +73,37 @@ class ProfileEditForm(forms.ModelForm):
         return profile
 
 
-class LessonSubmitForm(forms.Form):
+class ChapterCreateForm(forms.Form):
+    title = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'placeholder': 'Chapter title'}),
+    )
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Brief description of what this chapter covers...'}),
+    )
+    estimated_hours = forms.DecimalField(
+        min_value=0, max_value=999, initial=1.0,
+        help_text='Estimated hours to complete this chapter.',
+    )
+    order = forms.IntegerField(
+        min_value=0, initial=0,
+        help_text='Display order (lower = shown first).',
+    )
+
+
+
+class LessonCreateForChapterForm(forms.Form):
+    """Lesson creation scoped to a specific chapter — no global chapter selector."""
     title = forms.CharField(
         max_length=200,
         widget=forms.TextInput(attrs={'placeholder': 'Lesson title'}),
-    )
-    chapter = forms.ModelChoiceField(
-        queryset=None,
-        empty_label='— Select a chapter —',
-        help_text='Choose the chapter this lesson belongs to.',
     )
     summary = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Brief summary of what this lesson covers...'}),
         help_text='A short one-paragraph overview shown in listings.',
     )
     content = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 14, 'placeholder': 'Write your full lesson content here...', 'class': 'django_ckeditor_5'}),
+        widget=CKEditor5Widget(config_name='default'),
         help_text='Full lesson content. Use the editor toolbar for headings, code, tables, etc.',
     )
     difficulty = forms.ChoiceField(choices=[])
@@ -103,23 +119,33 @@ class LessonSubmitForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from learning.models import Chapter, DIFFICULTY_CHOICES
-        self.fields['chapter'].queryset = Chapter.objects.select_related('topic').filter(topic__is_published=True).order_by('topic__title', 'title')
+        from learning.models import DIFFICULTY_CHOICES
         self.fields['difficulty'].choices = DIFFICULTY_CHOICES
+
+
+class TopicEditForm(forms.Form):
+    title = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'placeholder': 'Topic title'}),
+    )
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'What does this topic cover? Who is the audience?'}),
+    )
+    icon_html = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '<i class="fa-solid fa-brain"></i>'}),
+        help_text='Optional Font Awesome icon snippet. Example: <code>&lt;i class="fa-solid fa-brain"&gt;&lt;/i&gt;</code>',
+    )
 
 
 class LessonEditForm(forms.ModelForm):
     class Meta:
         from learning.models import Lesson
         model = Lesson
-        fields = ['title', 'chapter', 'summary', 'content', 'difficulty', 'video_url', 'reading_time']
+        fields = ['title', 'summary', 'content', 'difficulty', 'video_url', 'reading_time']
         widgets = {
             'summary': forms.Textarea(attrs={'rows': 3}),
-            'content': forms.Textarea(attrs={'rows': 14, 'class': 'django_ckeditor_5'}),
+            'content': CKEditor5Widget(config_name='default'),
             'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/watch?v=...'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from learning.models import Chapter
-        self.fields['chapter'].queryset = Chapter.objects.select_related('topic').filter(topic__is_published=True).order_by('topic__title', 'title')

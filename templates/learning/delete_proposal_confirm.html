@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Delete Draft Proposal | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-trash"></i> Delete Draft Proposal</h1>
+    <p>This action cannot be undone.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="auth-container" style="max-width:520px;">
+      <div class="auth-card">
+
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fa-solid fa-trash" style="color:#ef4444;font-size:1.4rem;"></i>
+          </div>
+          <h2 style="margin:0 0 8px;">Delete this draft?</h2>
+          <p style="color:var(--text-secondary);margin:0;">
+            You are about to permanently delete the draft proposal:
+          </p>
+          <p style="font-weight:600;margin-top:8px;font-size:1.1rem;">{{ proposal.title }}</p>
+        </div>
+
+        <div style="background:var(--surface-secondary,#f9fafb);border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:.85rem;color:var(--text-muted);">
+          <i class="fa-solid fa-circle-info"></i>
+          Only <strong>draft</strong> proposals can be deleted. Approved, pending, and rejected proposals cannot be removed.
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div style="display:flex;gap:12px;">
+            <button type="submit" class="btn btn-primary" style="background:#ef4444;border-color:#ef4444;flex:1;">
+              <i class="fa-solid fa-trash"></i> Yes, Delete Draft
+            </button>
+            <a href="{% url 'my_proposals' %}" class="btn btn-outline" style="flex:1;text-align:center;">
+              <i class="fa-solid fa-arrow-left"></i> Cancel
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

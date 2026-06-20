@@ -1,16 +1,19 @@
 {% extends 'base.html' %}
-{% load static django_ckeditor_5 %}
 {% block title %}Edit Lesson | Learnova{% endblock %}
-
-{% block extra_head %}
-{% ckeditor_5_media %}
-{% endblock %}
 
 {% block content %}
 <div class="page-header page-header-sm">
   <div class="container">
     <h1><i class="fa-solid fa-pen"></i> Edit Lesson</h1>
-    <p>Update your lesson draft. Save as draft or submit for review.</p>
+    <p>
+      <a href="{% url 'my_lessons' %}" style="color:inherit;opacity:.7;">Contributor Hub</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      <a href="{% url 'manage_topic' lesson.chapter.topic.slug %}" style="color:inherit;opacity:.7;">{{ lesson.chapter.topic }}</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      <a href="{% url 'manage_chapter' lesson.chapter.pk %}" style="color:inherit;opacity:.7;">{{ lesson.chapter }}</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:.7rem;margin:0 6px;"></i>
+      Edit Lesson
+    </p>
   </div>
 </div>
 
@@ -21,7 +24,7 @@
 
         {% if lesson.status == 'rejected' and lesson.rejection_note %}
         <div class="alert alert-error" style="margin-bottom:20px;">
-          <strong><i class="fa-solid fa-circle-exclamation"></i> Admin note:</strong> {{ lesson.rejection_note }}
+          <strong><i class="fa-solid fa-circle-exclamation"></i> Admin feedback:</strong> {{ lesson.rejection_note }}
         </div>
         {% endif %}
 
@@ -33,6 +36,7 @@
 
         <form method="post" class="auth-form" novalidate>
           {% csrf_token %}
+          {{ form.media }}
 
           <div class="form-group">
             <label class="form-label">Lesson Title <span class="required">*</span></label>
@@ -40,17 +44,10 @@
             {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
           </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label">Chapter <span class="required">*</span></label>
-              {{ form.chapter }}
-              {% if form.chapter.errors %}<span class="form-error">{{ form.chapter.errors.0 }}</span>{% endif %}
-            </div>
-            <div class="form-group">
-              <label class="form-label">Difficulty <span class="required">*</span></label>
-              {{ form.difficulty }}
-              {% if form.difficulty.errors %}<span class="form-error">{{ form.difficulty.errors.0 }}</span>{% endif %}
-            </div>
+          <div class="form-group">
+            <label class="form-label">Difficulty <span class="required">*</span></label>
+            {{ form.difficulty }}
+            {% if form.difficulty.errors %}<span class="form-error">{{ form.difficulty.errors.0 }}</span>{% endif %}
           </div>
 
           <div class="form-group">
@@ -85,7 +82,7 @@
             <button type="submit" name="action" value="submit" class="btn btn-primary">
               <i class="fa-solid fa-paper-plane"></i> Submit for Review
             </button>
-            <a href="{% url 'my_lessons' %}" class="btn btn-outline">Cancel</a>
+            <a href="{% url 'manage_chapter' lesson.chapter.pk %}" class="btn btn-ghost">Cancel</a>
           </div>
         </form>
 

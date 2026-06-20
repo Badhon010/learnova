@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ chapter.title }} | Manage | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <a href="{% url 'manage_topic' topic.slug %}" class="btn btn-outline btn-sm">
+        <i class="fa-solid fa-arrow-left"></i> {{ topic.title }}
+      </a>
+      <h1 style="margin:0;">{{ chapter.title }}</h1>
+    </div>
+    <p style="margin-top:8px;">{{ chapter.description|truncatechars:120 }}</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <div class="manage-topic-layout">
+
+      <aside class="sidebar sidebar-left">
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-compass"></i> Actions</h3>
+          <ul class="quick-nav">
+            <li>
+              <a href="{% url 'create_lesson_for_chapter' chapter.pk %}">
+                <i class="fa-solid fa-plus"></i> Add Lesson
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'edit_chapter' chapter.pk %}">
+                <i class="fa-solid fa-pen"></i> Edit Chapter
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'manage_topic' topic.slug %}">
+                <i class="fa-solid fa-arrow-left"></i> Back to Topic
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'my_lessons' %}">
+                <i class="fa-solid fa-pen-nib"></i> Contributor Hub
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="sidebar-card">
+          <h3 class="sidebar-title"><i class="fa-solid fa-circle-info"></i> Stats</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:.85rem;">
+            <div><i class="fa-solid fa-file-lines" style="color:var(--primary);width:16px;"></i> {{ lessons|length }} lesson{{ lessons|length|pluralize }}</div>
+            <div><i class="fa-regular fa-clock" style="color:var(--primary);width:16px;"></i> {{ chapter.estimated_hours }}h estimated</div>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="contrib-section-header" style="margin-bottom:20px;">
+          <h2><i class="fa-solid fa-file-lines"></i> Lessons</h2>
+          <a href="{% url 'create_lesson_for_chapter' chapter.pk %}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Add Lesson
+          </a>
+        </div>
+
+        {% if lessons %}
+        <div class="lesson-rows">
+          {% for lesson in lessons %}
+          <div class="lesson-row">
+            <div class="lesson-row-info">
+              <div class="lesson-row-title">{{ lesson.title }}</div>
+              <div class="lesson-row-meta">
+                <span class="status-pill status-{{ lesson.status }}" style="font-size:.72rem;padding:2px 8px;">
+                  {{ lesson.get_status_display }}
+                </span>
+                <span class="difficulty-badge {{ lesson.difficulty_class }}">{{ lesson.difficulty_label }}</span>
+                <span><i class="fa-regular fa-clock"></i> {{ lesson.reading_time }}min</span>
+              </div>
+              {% if lesson.status == 'rejected' and lesson.rejection_note %}
+              <div class="rejection-note" style="margin-top:6px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ lesson.rejection_note }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="lesson-row-actions">
+              {% if lesson.is_published %}
+              <a href="{{ lesson.get_absolute_url }}" class="btn btn-sm btn-outline" target="_blank">
+                <i class="fa-solid fa-eye"></i> View
+              </a>
+              {% endif %}
+              {% if lesson.status == 'pending_review' %}
+              <span class="btn btn-sm btn-outline" style="opacity:.7;cursor:default;font-size:.78rem;">
+                <i class="fa-solid fa-clock"></i> Under Review
+              </span>
+              {% endif %}
+              {% if lesson.status in 'draft,rejected' %}
+              <a href="{% url 'lesson_edit' lesson.pk %}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-pen"></i> Edit
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fa-solid fa-file-lines"></i></div>
+          <h3>No lessons yet</h3>
+          <p>Add the first lesson to this chapter.</p>
+          <a href="{% url 'create_lesson_for_chapter' chapter.pk %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add First Lesson
+          </a>
+        </div>
+        {% endif %}
+
+      </main>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

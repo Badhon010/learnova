@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Topic Proposals | Learnova{% endblock %}
+
+{% block content %}
+<div class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fa-solid fa-lightbulb"></i> My Topic Proposals</h1>
+    <p>Suggest new topics for Learnova. Approved proposals become live topics you own.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="proposals-wrapper">
+
+      <div class="proposals-toolbar">
+        <a href="{% url 'submit_topic_proposal' %}" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> New Proposal
+        </a>
+        <a href="{% url 'my_lessons' %}" class="btn btn-outline">
+          <i class="fa-solid fa-arrow-left"></i> Contributor Hub
+        </a>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% if proposals %}
+        <div class="proposals-list">
+          {% for p in proposals %}
+          <div class="proposal-card proposal-status-{{ p.status }}">
+            <div class="proposal-card-header">
+              <div class="proposal-icon">{{ p.icon_html|safe }}</div>
+              <div class="proposal-card-meta">
+                <div class="proposal-card-title">{{ p.title }}</div>
+                <div class="proposal-card-date">Submitted {{ p.created_at|date:"M j, Y" }}</div>
+              </div>
+              <span class="status-pill status-{{ p.status }}">
+                {% if p.status == 'draft' %}<i class="fa-solid fa-pen"></i>
+                {% elif p.status == 'pending_review' %}<i class="fa-solid fa-clock"></i>
+                {% elif p.status == 'approved' %}<i class="fa-solid fa-circle-check"></i>
+                {% else %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+                {{ p.get_status_display }}
+              </span>
+            </div>
+            <div class="proposal-card-desc">{{ p.description|truncatechars:180 }}</div>
+            {% if p.status == 'rejected' and p.rejection_note %}
+            <div class="rejection-note">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <strong>Feedback:</strong> {{ p.rejection_note }}
+            </div>
+            {% endif %}
+            {% if p.status == 'approved' %}
+              {% if p.approved_topic %}
+              <div class="proposal-approved-link" style="background:var(--success-bg,#f0fdf4);border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <i class="fa-solid fa-circle-check" style="color:#22c55e;font-size:1.2rem;"></i>
+                <div>
+                  <strong>Your topic was created!</strong>
+                  <div style="font-size:.85rem;color:var(--text-secondary);margin-top:2px;">Start by creating chapters for this topic.</div>
+                </div>
+                <a href="{% url 'manage_topic' p.approved_topic.slug %}" class="btn btn-primary btn-sm" style="margin-left:auto;">
+                  <i class="fa-solid fa-pen-to-square"></i> Manage Topic
+                </a>
+              </div>
+              {% endif %}
+            {% endif %}
+            <div class="proposal-card-actions">
+              {% if p.status == 'approved' and p.approved_topic %}
+              <a href="{% url 'manage_topic' p.approved_topic.slug %}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-layer-group"></i> Go to My Topic
+              </a>
+              {% elif p.status == 'draft' or p.status == 'rejected' %}
+              <a href="{% url 'edit_proposal' p.pk %}" class="btn btn-sm btn-outline">
+                <i class="fa-solid fa-pen"></i> Edit & Resubmit
+              </a>
+              {% if p.status == 'draft' %}
+              <a href="{% url 'delete_proposal' p.pk %}" class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#fca5a5;">
+                <i class="fa-solid fa-trash"></i> Delete Draft
+              </a>
+              {% endif %}
+              {% elif p.status == 'pending_review' %}
+              <span class="btn btn-sm btn-outline" style="opacity:.6;cursor:default;">
+                <i class="fa-solid fa-clock"></i> Awaiting Review
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fa-solid fa-lightbulb"></i></div>
+          <h3>No proposals yet</h3>
+          <p>Have an idea for a topic? Submit a proposal and admins will review it. Approved topics are assigned to you so you can build them out.</p>
+          <a href="{% url 'submit_topic_proposal' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Submit Your First Proposal
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</section>
+{% endblock %}

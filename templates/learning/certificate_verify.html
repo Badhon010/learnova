@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Verify Certificate | Learnova{% endblock %}
+
+{% block extra_head %}
+<style>
+.verify-page { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 60px 16px; background: var(--bg-secondary); }
+.verify-card { max-width: 560px; width: 100%; background: var(--surface); border: 2px solid #22c55e; border-radius: 20px; padding: 48px 36px; text-align: center; box-shadow: 0 8px 40px rgba(34,197,94,.1); }
+.verify-seal { font-size: 3.5rem; color: #22c55e; margin-bottom: 16px; }
+.verify-status { display: inline-flex; align-items: center; gap: 8px; background: #dcfce7; color: #16a34a; font-weight: 700; font-size: 0.9rem; padding: 6px 18px; border-radius: 999px; margin-bottom: 28px; letter-spacing: .03em; }
+.verify-name { font-size: 1.75rem; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.verify-topic-label { font-size: 0.88rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+.verify-topic { font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 32px; }
+.verify-meta { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 4px; }
+.verify-meta-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.verify-meta-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+.verify-meta-value { font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); font-family: monospace; }
+.verify-actions { margin-top: 28px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-page">
+  <div class="verify-card">
+    <div class="verify-seal"><i class="fa-solid fa-square-check"></i></div>
+    <div class="verify-status">
+      <i class="fa-solid fa-circle-check"></i> Verified Certificate
+    </div>
+    <div class="verify-name">{{ cert.user.get_full_name|default:cert.user.username }}</div>
+    <div class="verify-topic-label">successfully completed</div>
+    <div class="verify-topic">{{ cert.topic.title }}</div>
+
+    <div class="verify-meta">
+      <div class="verify-meta-item">
+        <span class="verify-meta-label">Issued On</span>
+        <span class="verify-meta-value" style="font-family:inherit;">{{ cert.issued_at|date:"F j, Y" }}</span>
+      </div>
+      <div class="verify-meta-item">
+        <span class="verify-meta-label">Certificate ID</span>
+        <span class="verify-meta-value">{{ cert.certificate_id }}</span>
+      </div>
+      <div class="verify-meta-item">
+        <span class="verify-meta-label">Platform</span>
+        <span class="verify-meta-value" style="font-family:inherit;">Learnova</span>
+      </div>
+    </div>
+
+    <div class="verify-actions">
+      <a href="{{ cert.get_absolute_url }}" class="btn btn-primary">
+        <i class="fa-solid fa-eye"></i> View Full Certificate
+      </a>
+      <a href="{% url 'topics' %}" class="btn btn-outline">
+        <i class="fa-solid fa-book"></i> Browse Topics
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
