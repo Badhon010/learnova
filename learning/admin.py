@@ -129,7 +129,7 @@ class LessonAdmin(ModelAdmin):
 
     list_display = [
         'title', 'chapter', 'status_badge', 'difficulty', 'order',
-        'reading_time', 'featured', 'is_published', 'submitted_by', 'created_at',
+        'reading_time', 'featured', 'is_published', 'created_at',
     ]
     list_filter = ['status', 'is_published', 'difficulty', 'featured', 'chapter__topic', 'chapter']
     list_editable = ['featured', 'is_published']
@@ -147,7 +147,7 @@ class LessonAdmin(ModelAdmin):
             ),
         }),
         ('Publication Status', {
-            'fields': ('status', 'submitted_by', 'published_at'),
+            'fields': ('status', 'published_at'),
         }),
         ('Classification Parameters', {
             'fields': ('difficulty', 'featured'),

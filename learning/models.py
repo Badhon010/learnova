@@ -367,10 +367,6 @@ class Lesson(models.Model):
     reading_time = models.PositiveIntegerField(default=5)
     is_published = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=LESSON_STATUS_CHOICES, default='draft')
-    submitted_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='submitted_lessons',
-    )
     rejection_note = models.TextField(blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
