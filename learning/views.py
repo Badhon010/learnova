@@ -133,7 +133,7 @@ class LessonDetailView(DetailView):
         return (
             Lesson.objects
             .filter(is_published=True)
-            .select_related('chapter', 'chapter__topic', 'submitted_by', 'submitted_by__profile')
+            .select_related('chapter', 'chapter__topic')
         )
 
     def get_context_data(self, **kwargs):
@@ -295,20 +295,37 @@ def update_progress_view(request):
     if existing and existing.progress_pct >= progress_pct:
         return JsonResponse({'ok': True, 'progress': existing.progress_pct})
 
+    quiz_required = bool(lesson.required_quiz_questions and lesson.required_quiz_questions > 0)
+    quiz_passed = False
+    if quiz_required:
+        try:
+            from quizzes.models import QuizAttempt
+            quiz_passed = QuizAttempt.objects.filter(
+                user=request.user, quiz=lesson.quiz, passed=True
+            ).exists()
+        except Exception:
+            quiz_passed = False
+
+    can_complete = progress_pct >= 100 and (not quiz_required or quiz_passed)
+
     progress_obj, _ = UserLessonProgress.objects.update_or_create(
         user=request.user, lesson=lesson,
         defaults={
             'progress_pct': progress_pct,
-            'is_complete': progress_pct >= 100,
+            'is_complete': can_complete,
         },
     )
 
     RecentlyViewed.objects.update_or_create(user=request.user, lesson=lesson, defaults={})
 
-    if progress_pct >= 100:
+    if can_complete:
         _check_and_issue_certificate(request.user, lesson)
 
-    return JsonResponse({'ok': True, 'progress': progress_pct})
+    response_data = {'ok': True, 'progress': progress_pct}
+    if quiz_required and progress_pct >= 100 and not quiz_passed:
+        response_data['quiz_required'] = True
+        response_data['message'] = 'Pass the lesson quiz to complete this lesson.'
+    return JsonResponse(response_data)
 
 
 def _check_and_issue_certificate(user, lesson):
@@ -382,7 +399,7 @@ def delete_comment_view(request, pk):
         comment.user == request.user
         or request.user.is_staff
         or (
-            comment.lesson.submitted_by == request.user
+            comment.lesson.chapter.topic.owner == request.user
             and hasattr(request.user, 'profile')
             and request.user.profile.is_contributor
         )
@@ -433,7 +450,7 @@ def delete_reply_view(request, pk):
         reply.user == request.user
         or request.user.is_staff
         or (
-            reply.comment.lesson.submitted_by == request.user
+            reply.comment.lesson.chapter.topic.owner == request.user
             and hasattr(request.user, 'profile')
             and request.user.profile.is_contributor
         )

@@ -101,7 +101,7 @@
                 <div class="chapter-card-order">{{ chapter.order }}</div>
                 <div class="chapter-card-body">
                   <h3 class="chapter-card-title">{{ chapter.title }}</h3>
-                  <p class="chapter-card-desc">{{ chapter.description|truncatechars:120 }}</p>
+                  <p class="chapter-card-desc">{{ chapter.description|truncatechars:70 }}</p>
                   <span class="chapter-card-lessons">
                     <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
                     {{ chapter.num_lessons }} lesson{{ chapter.num_lessons|pluralize }}

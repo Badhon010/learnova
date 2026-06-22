@@ -146,6 +146,13 @@ class LessonAdmin(ModelAdmin):
                 'order', 'reading_time', 'is_published',
             ),
         }),
+        ('Quiz Requirement', {
+            'fields': ('required_quiz_questions',),
+            'description': (
+                'Set a number to require passing a quiz before this lesson can be marked complete. '
+                'Leave blank for normal completion.'
+            ),
+        }),
         ('Publication Status', {
             'fields': ('status', 'published_at'),
         }),

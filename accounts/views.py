@@ -155,7 +155,7 @@ def profile_detail_view(request, username):
     from learning.models import Lesson
     published_lessons = (
         Lesson.objects
-        .filter(submitted_by=user, is_published=True, status='published')
+        .filter(chapter__topic__owner=user, is_published=True, status='published')
         .select_related('chapter', 'chapter__topic')
         .order_by('-published_at')
     )
@@ -415,10 +415,10 @@ def create_lesson_for_chapter_view(request, chapter_pk):
                 difficulty=form.cleaned_data['difficulty'],
                 video_url=form.cleaned_data.get('video_url', ''),
                 reading_time=form.cleaned_data.get('reading_time', 5),
+                required_quiz_questions=form.cleaned_data.get('required_quiz_questions') or None,
                 order=chapter.lessons.count(),
                 is_published=False,
                 status='draft',
-                submitted_by=request.user,
             )
             messages.success(request, f'Lesson "{title}" saved.')
             return redirect('manage_chapter', chapter_pk=chapter.pk)
@@ -438,8 +438,7 @@ def lesson_edit_view(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
 
     can_edit = (
-        lesson.submitted_by == request.user
-        or lesson.chapter.topic.owner == request.user
+        lesson.chapter.topic.owner == request.user
         or request.user.is_staff
     )
     if not can_edit:

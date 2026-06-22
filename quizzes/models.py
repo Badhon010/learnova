@@ -49,6 +49,8 @@ class QuizAttempt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
     score = models.PositiveIntegerField(default=0, help_text='Percentage score 0–100.')
     passed = models.BooleanField(default=False)
+    total_questions = models.PositiveIntegerField(default=0)
+    correct_answers = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

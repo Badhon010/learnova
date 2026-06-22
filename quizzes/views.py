@@ -1,9 +1,7 @@
+import random
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_protect
-import json
 
 from .models import Quiz, QuizAttempt
 
@@ -17,7 +15,17 @@ def quiz_detail_view(request, quiz_id):
     )
 
     if request.method == 'POST':
-        questions = list(quiz.questions.prefetch_related('choices').order_by('order'))
+        session_key = f'quiz_{quiz_id}_questions'
+        stored_ids = request.session.get(session_key, [])
+
+        all_questions = list(quiz.questions.prefetch_related('choices').order_by('order'))
+
+        if stored_ids:
+            id_set = set(stored_ids)
+            questions = [q for q in all_questions if q.id in id_set]
+        else:
+            questions = all_questions
+
         total = len(questions)
         correct_count = 0
         results = []
@@ -31,7 +39,7 @@ def quiz_detail_view(request, quiz_id):
                     chosen_choice = q.choices.get(pk=int(chosen_id))
                 except (ValueError, q.choices.model.DoesNotExist):
                     pass
-            is_correct = chosen_choice and chosen_choice.is_correct
+            is_correct = bool(chosen_choice and chosen_choice.is_correct)
             if is_correct:
                 correct_count += 1
             results.append({
@@ -50,7 +58,22 @@ def quiz_detail_view(request, quiz_id):
             quiz=quiz,
             score=score,
             passed=passed,
+            total_questions=total,
+            correct_answers=correct_count,
         )
+
+        if passed:
+            try:
+                from learning.notifications import notify_quiz_passed
+                notify_quiz_passed(attempt)
+            except Exception:
+                pass
+
+        if passed and lesson and lesson.required_quiz_questions and lesson.required_quiz_questions > 0:
+            _complete_lesson_after_quiz_pass(request.user, lesson)
+
+        if session_key in request.session:
+            del request.session[session_key]
 
         return render(request, 'quizzes/quiz_result.html', {
             'quiz': quiz,
@@ -63,9 +86,32 @@ def quiz_detail_view(request, quiz_id):
             'attempt': attempt,
         })
 
+    questions = _select_questions(quiz, lesson)
+    request.session[f'quiz_{quiz_id}_questions'] = [q.id for q in questions]
+
     return render(request, 'quizzes/quiz_detail.html', {
         'quiz': quiz,
         'lesson': lesson,
-        'questions': quiz.questions.prefetch_related('choices').order_by('order'),
+        'questions': questions,
         'best_attempt': best_attempt,
     })
+
+
+def _select_questions(quiz, lesson):
+    all_questions = list(quiz.questions.prefetch_related('choices').order_by('order'))
+    if lesson and lesson.required_quiz_questions and lesson.required_quiz_questions > 0:
+        n = min(lesson.required_quiz_questions, len(all_questions))
+        if n < len(all_questions):
+            return random.sample(all_questions, n)
+    return all_questions
+
+
+def _complete_lesson_after_quiz_pass(user, lesson):
+    from learning.models import UserLessonProgress
+    from learning.views import _check_and_issue_certificate
+
+    progress = UserLessonProgress.objects.filter(user=user, lesson=lesson).first()
+    if progress and progress.progress_pct >= 100 and not progress.is_complete:
+        progress.is_complete = True
+        progress.save(update_fields=['is_complete'])
+        _check_and_issue_certificate(user, lesson)

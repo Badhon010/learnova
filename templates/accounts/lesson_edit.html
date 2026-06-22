@@ -75,6 +75,13 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">Required Quiz Questions</label>
+            {{ form.required_quiz_questions }}
+            {% if form.required_quiz_questions.errors %}<span class="form-error">{{ form.required_quiz_questions.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.required_quiz_questions.help_text }}</span>
+          </div>
+
           <div class="form-actions">
             <button type="submit" name="action" value="save" class="btn btn-outline">
               <i class="fa-solid fa-floppy-disk"></i> Save as Draft

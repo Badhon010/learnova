@@ -11,7 +11,7 @@
         <h2 style="margin:0 0 6px;font-size:1.1rem;">{{ lesson.title }}</h2>
         <div style="color:#6b7280;font-size:0.875rem;">
           {{ lesson.chapter }} &middot; {{ lesson.get_difficulty_display }} &middot;
-          Submitted by <strong>{{ lesson.submitted_by.username|default:"unknown" }}</strong>
+          Submitted by <strong>{{ lesson.chapter.topic.owner.username|default:"unknown" }}</strong>
           on {{ lesson.updated_at|date:"M j, Y" }}
         </div>
         <p style="margin:10px 0 0;color:#374151;">{{ lesson.summary|truncatewords:40 }}</p>

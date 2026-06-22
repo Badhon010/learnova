@@ -116,6 +116,15 @@ class LessonCreateForChapterForm(forms.Form):
         min_value=1, max_value=240, initial=5,
         help_text='Estimated reading time in minutes.',
     )
+    required_quiz_questions = forms.IntegerField(
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(attrs={'placeholder': 'e.g. 5'}),
+        help_text=(
+            'Leave empty to allow normal lesson completion. '
+            'Set a number to require passing a quiz before completion.'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -143,9 +152,16 @@ class LessonEditForm(forms.ModelForm):
     class Meta:
         from learning.models import Lesson
         model = Lesson
-        fields = ['title', 'summary', 'content', 'difficulty', 'video_url', 'reading_time']
+        fields = ['title', 'summary', 'content', 'difficulty', 'video_url', 'reading_time', 'required_quiz_questions']
         widgets = {
             'summary': forms.Textarea(attrs={'rows': 3}),
             'content': CKEditor5Widget(config_name='default'),
             'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/watch?v=...'}),
+            'required_quiz_questions': forms.NumberInput(attrs={'placeholder': 'e.g. 5'}),
+        }
+        help_texts = {
+            'required_quiz_questions': (
+                'Leave empty to allow normal lesson completion. '
+                'Set a number to require passing a quiz before completion.'
+            ),
         }

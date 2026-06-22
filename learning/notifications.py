@@ -131,9 +131,10 @@ def notify_topic_rejected_to_draft(topic):
 
 def notify_new_comment(comment):
     lesson = comment.lesson
-    if not lesson.submitted_by or lesson.submitted_by == comment.user:
+    topic_owner = lesson.chapter.topic.owner
+    if not topic_owner or topic_owner == comment.user:
         return
-    user = lesson.submitted_by
+    user = topic_owner
     commenter = comment.user.get_full_name() or comment.user.username
     title = f'New comment on "{lesson.title}"'
     message = f'{commenter} commented: "{comment.content[:200]}"'

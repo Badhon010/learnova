@@ -15,7 +15,7 @@
     <div class="review-card-meta" style="margin-top:8px;font-size:.85rem;">
       <span><i class="fa-solid fa-layer-group"></i> {{ lesson.chapter.topic.title }}</span>
       <span><i class="fa-solid fa-list"></i> {{ lesson.chapter.title }}</span>
-      <span><i class="fa-solid fa-user"></i> {{ lesson.submitted_by.username }}</span>
+      <span><i class="fa-solid fa-user"></i> {{ lesson.chapter.topic.owner.username|default:"unknown" }}</span>
       <span class="difficulty-badge badge-{{ lesson.difficulty }}">{{ lesson.difficulty_label }}</span>
       <span><i class="fa-regular fa-clock"></i> {{ lesson.reading_time }}min read</span>
       <span><i class="fa-regular fa-calendar"></i> Submitted {{ lesson.created_at|timesince }} ago</span>
@@ -89,11 +89,13 @@
         <div class="sidebar-card">
           <h3 class="sidebar-title"><i class="fa-solid fa-user"></i> Contributor</h3>
           <div style="font-size:.88rem;display:flex;flex-direction:column;gap:6px;color:var(--text-secondary);">
-            <div><i class="fa-solid fa-at" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.username }}</div>
-            {% if lesson.submitted_by.get_full_name %}
-            <div><i class="fa-solid fa-id-card" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.get_full_name }}</div>
+            <div><i class="fa-solid fa-at" style="width:16px;color:var(--primary);"></i> {{ lesson.chapter.topic.owner.username|default:"unknown" }}</div>
+            {% if lesson.chapter.topic.owner.get_full_name %}
+            <div><i class="fa-solid fa-id-card" style="width:16px;color:var(--primary);"></i> {{ lesson.chapter.topic.owner.get_full_name }}</div>
             {% endif %}
-            <div><i class="fa-regular fa-envelope" style="width:16px;color:var(--primary);"></i> {{ lesson.submitted_by.email }}</div>
+            {% if lesson.chapter.topic.owner.email %}
+            <div><i class="fa-regular fa-envelope" style="width:16px;color:var(--primary);"></i> {{ lesson.chapter.topic.owner.email }}</div>
+            {% endif %}
           </div>
           {% if other_lessons %}
           <div style="margin-top:14px;">

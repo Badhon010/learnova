@@ -138,8 +138,8 @@ def _build_analytics(Lesson, LessonBookmark, UserLessonProgress, LessonRating, U
     top_contributors = (
         User.objects
         .annotate(pub_count=Count(
-            'submitted_lessons',
-            filter=Q(submitted_lessons__status='published'),
+            'owned_topics',
+            filter=Q(owned_topics__status='published'),
         ))
         .filter(pub_count__gt=0)
         .order_by('-pub_count')

@@ -172,18 +172,35 @@
           <div class="quiz-card">
             <div class="quiz-card-header">
               <h2><i class="fa-solid fa-circle-question"></i> Knowledge Check</h2>
-              <p>Test your understanding of this lesson.</p>
+              {% if lesson.required_quiz_questions and lesson.required_quiz_questions > 0 %}
+                {% if best_attempt and best_attempt.passed %}
+                  <p style="color:#22c55e;font-weight:600;margin-top:4px;"><i class="fa-solid fa-circle-check"></i> Quiz Passed — this lesson is now completable.</p>
+                {% else %}
+                  <p style="color:#f59e0b;font-weight:600;margin-top:4px;"><i class="fa-solid fa-lock"></i> Quiz Required For Completion</p>
+                {% endif %}
+              {% else %}
+                <p>Test your understanding of this lesson.</p>
+              {% endif %}
             </div>
             <div class="quiz-card-body">
               <div class="quiz-info-bar">
                 <span><i class="fa-solid fa-list-check"></i> {{ quiz.questions.count }} question{{ quiz.questions.count|pluralize }}</span>
                 <span><i class="fa-solid fa-trophy"></i> Pass at {{ quiz.pass_pct }}%</span>
+                {% if lesson.required_quiz_questions and lesson.required_quiz_questions > 0 %}
+                  <span><i class="fa-solid fa-clipboard-question"></i> {{ lesson.required_quiz_questions }} question{{ lesson.required_quiz_questions|pluralize }} required</span>
+                {% endif %}
                 {% if best_attempt %}
                 <span><i class="fa-solid fa-star"></i> Your best: {{ best_attempt.score }}%
-                  {% if best_attempt.passed %}<span style="color:#22c55e;">(Passed)</span>{% endif %}
+                  {% if best_attempt.passed %}<span style="color:#22c55e;"> ✓ Passed</span>{% else %}<span style="color:#ef4444;"> ✗ Not passed</span>{% endif %}
                 </span>
                 {% endif %}
               </div>
+              {% if lesson.required_quiz_questions and lesson.required_quiz_questions > 0 and not best_attempt.passed %}
+              <div id="quizRequiredNotice" style="margin-bottom:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:.88rem;color:#92400e;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Pass the lesson quiz to complete this lesson.
+              </div>
+              {% endif %}
               <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-primary">
                 {% if best_attempt %}
                   <i class="fa-solid fa-rotate-right"></i> Retake Quiz
@@ -191,6 +208,15 @@
                   <i class="fa-solid fa-play"></i> Take Quiz
                 {% endif %}
               </a>
+            </div>
+          </div>
+        </div>
+        {% elif lesson.required_quiz_questions and lesson.required_quiz_questions > 0 %}
+        <div class="quiz-section" id="quizSection">
+          <div class="quiz-card">
+            <div class="quiz-card-header">
+              <h2><i class="fa-solid fa-circle-question"></i> Quiz Required For Completion</h2>
+              <p style="color:#6b7280;">A quiz with {{ lesson.required_quiz_questions }} question{{ lesson.required_quiz_questions|pluralize }} must be passed before this lesson can be completed. No quiz has been added yet.</p>
             </div>
           </div>
         </div>
@@ -709,13 +735,47 @@
     updateProgressDisplay();
   }
 
+  var quizRequired = {% if lesson.required_quiz_questions and lesson.required_quiz_questions > 0 %}true{% else %}false{% endif %};
+  var quizPassed = {% if best_attempt and best_attempt.passed %}true{% else %}false{% endif %};
+
   if (markCompleteBtn) {
     markCompleteBtn.addEventListener('click', function () {
-      sendProgress(100);
-      if (progressFill) progressFill.style.width = '100%';
-      if (progressFill) progressFill.classList.add('progress-complete');
-      if (progressLabel) progressLabel.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Completed';
-      markCompleteBtn.style.display = 'none';
+      if (quizRequired && !quizPassed) {
+        var notice = document.getElementById('quizRequiredNotice');
+        if (notice) {
+          notice.style.outline = '2px solid #f59e0b';
+          notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          var quizSection = document.getElementById('quizSection');
+          if (quizSection) quizSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          alert('Pass the lesson quiz to complete this lesson.');
+        }
+        return;
+      }
+      fetch(progressUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ lesson_slug: lessonSlug, progress: 100 }),
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.quiz_required) {
+          var notice = document.getElementById('quizRequiredNotice');
+          if (notice) {
+            notice.style.outline = '2px solid #f59e0b';
+            notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            alert(data.message || 'Pass the lesson quiz to complete this lesson.');
+          }
+          return;
+        }
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressFill) progressFill.classList.add('progress-complete');
+        if (progressLabel) progressLabel.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e"></i> Completed';
+        markCompleteBtn.style.display = 'none';
+      })
+      .catch(function (e) { console.warn('Progress error:', e); });
     });
   }
   {% endif %}

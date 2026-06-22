@@ -365,6 +365,14 @@ class Lesson(models.Model):
     featured = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
     reading_time = models.PositiveIntegerField(default=5)
+    required_quiz_questions = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=(
+            'Number of random quiz questions required for lesson completion. '
+            'Leave empty to allow normal completion. Set a number to require passing a quiz before completion.'
+        ),
+    )
     is_published = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=LESSON_STATUS_CHOICES, default='draft')
     rejection_note = models.TextField(blank=True)
