@@ -33,7 +33,7 @@ class TopicAdmin(ModelAdmin):
     compressed_fields = True
 
     list_display = [
-        'title', 'icon_preview', 'status', 'order', 'featured',
+        'title', 'status', 'order', 'featured',
         'is_published', 'owner', 'created_at',
     ]
     list_filter = ['status', 'is_published', 'featured', 'created_at']

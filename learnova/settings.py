@@ -200,7 +200,6 @@ UNFOLD = {
                     {"title": "Chapters", "icon": "layers", "link": "/admin/learning/chapter/"},
                     {"title": "Lessons", "icon": "article", "link": "/admin/learning/lesson/"},
                     {"title": "Quizzes", "icon": "quiz", "link": "/admin/quizzes/quiz/"},
-                    {"title": "Pending Review", "icon": "rate_review", "link": "/admin/learning/lesson/?status__exact=pending_review"},
                 ],
             },
             {
