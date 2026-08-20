@@ -27,13 +27,41 @@
           {% endfor %}
         {% endif %}
 
-        <form method="post" class="auth-form" novalidate>
+        <form method="post" enctype="multipart/form-data" class="auth-form" novalidate>
           {% csrf_token %}
 
           <div class="form-group">
             <label class="form-label">Topic Title <span class="required">*</span></label>
             {{ form.title }}
             {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cover Image</label>
+            {{ form.image }}
+            {% if form.image.errors %}<span class="form-error">{{ form.image.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.image.help_text }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Image Alt Text</label>
+            {{ form.image_alt }}
+            {% if form.image_alt.errors %}<span class="form-error">{{ form.image_alt.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.image_alt.help_text }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SEO Title</label>
+            {{ form.meta_title }}
+            {% if form.meta_title.errors %}<span class="form-error">{{ form.meta_title.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.meta_title.help_text }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SEO Description</label>
+            {{ form.meta_description }}
+            {% if form.meta_description.errors %}<span class="form-error">{{ form.meta_description.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.meta_description.help_text }}</span>
           </div>
 
           <div class="form-group">

@@ -37,6 +37,7 @@
 .auth-form input[type="password"],
 .auth-form input[type="url"],
 .auth-form input[type="number"],
+.auth-form input[type="file"],
 .auth-form select,
 .auth-form textarea {
   width: 100%;
@@ -54,6 +55,40 @@
 .auth-form textarea:focus { border-color: var(--primary); }
 .auth-form textarea { resize: vertical; min-height: 90px; }
 .auth-form select { appearance: none; cursor: pointer; }
+
+.auth-form input[type="file"],
+.profile-file-input {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px dashed var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.auth-form input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.profile-upload-help {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.profile-upload-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+}
 
 /* Dashboard */
 .dashboard-layout { display: grid; grid-template-columns: 280px 1fr; gap: 32px; align-items: start; }

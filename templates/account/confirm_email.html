@@ -1,0 +1,10 @@
+{% extends "account/base.html" %}
+{% block title %}Confirm Email | Learnova{% endblock %}
+{% block account_content %}
+<div class="auth-header"><h1>Confirm your email</h1><p>Confirm {{ confirmation.email_address.email }} to activate this address.</p></div>
+{% if confirmation %}
+<form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="auth-form">
+  {% csrf_token %}<button type="submit" class="btn btn-primary btn-full">Confirm email</button>
+</form>
+{% else %}<p class="form-error-banner">This confirmation link is invalid or expired.</p>{% endif %}
+{% endblock %}

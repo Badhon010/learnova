@@ -5,6 +5,10 @@ All operations are wrapped in try/except so failures never break requests.
 """
 from django.core.mail import send_mail
 from django.conf import settings
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def _send_email(subject, message, recipient_email):
@@ -19,7 +23,7 @@ def _send_email(subject, message, recipient_email):
             fail_silently=True,
         )
     except Exception:
-        pass
+        logger.exception('Notification email could not be sent to %s', recipient_email)
 
 
 def _notif(user, notif_type, title, message, url=''):

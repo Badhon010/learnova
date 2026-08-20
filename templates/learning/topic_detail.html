@@ -6,7 +6,8 @@
 {% block og_title %}{{ topic.get_meta_title }}{% endblock %}
 {% block og_description %}{{ topic.get_meta_description|truncatechars:150 }}{% endblock %}
 {% if topic.image %}
-{% block og_image %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ topic.image.url }}" />{% endblock %}
+{% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ topic.image.url }}" />{% endblock %}
+{% block twitter_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ topic.image.url }}" />{% endblock %}
 {% endif %}
 
 {% block canonical %}
@@ -79,8 +80,8 @@
               <img src="{{ topic.image.url }}" alt="{% if topic.image_alt %}{{ topic.image_alt }}{% else %}{{ topic.title }} cover image{% endif %}" />
             </div>
           {% endif %}
-          <div class="topic-icon-large" aria-hidden="true">
-            {{ topic.icon_html|safe }}
+          <div class="topic-icon topic-icon-large" aria-hidden="true">
+            {{ topic.safe_icon_html }}
           </div>
           <div>
             <h1 class="topic-title">{{ topic.title }}</h1>

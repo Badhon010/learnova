@@ -45,6 +45,13 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">URL Slug</label>
+            {{ form.slug }}
+            {% if form.slug.errors %}<span class="form-error">{{ form.slug.errors.0 }}</span>{% endif %}
+            <span class="form-hint">Changing this may affect existing search links.</span>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Difficulty <span class="required">*</span></label>
             {{ form.difficulty }}
             {% if form.difficulty.errors %}<span class="form-error">{{ form.difficulty.errors.0 }}</span>{% endif %}
@@ -54,6 +61,20 @@
             <label class="form-label">Summary <span class="required">*</span></label>
             {{ form.summary }}
             {% if form.summary.errors %}<span class="form-error">{{ form.summary.errors.0 }}</span>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SEO Title</label>
+            {{ form.meta_title }}
+            {% if form.meta_title.errors %}<span class="form-error">{{ form.meta_title.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.meta_title.help_text }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SEO Description</label>
+            {{ form.meta_description }}
+            {% if form.meta_description.errors %}<span class="form-error">{{ form.meta_description.errors.0 }}</span>{% endif %}
+            <span class="form-hint">{{ form.meta_description.help_text }}</span>
           </div>
 
           <div class="form-group">

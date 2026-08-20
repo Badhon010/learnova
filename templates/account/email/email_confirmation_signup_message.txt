@@ -1,0 +1,10 @@
+Hello {{ user.get_full_name|default:user.username }},
+
+Welcome to Learnova. Please confirm your email address by opening this link:
+
+{{ activate_url }}
+
+This link is valid for a limited time. If you did not create this account, you
+can safely ignore this email.
+
+The Learnova Team

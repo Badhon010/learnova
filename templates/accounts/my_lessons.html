@@ -64,7 +64,7 @@
       <div class="topic-owner-grid">
         {% for topic in owned_topics %}
         <div class="topic-owner-card">
-          <div class="topic-owner-icon">{{ topic.icon_html|safe }}</div>
+          <div class="topic-owner-icon">{{ topic.safe_icon_html }}</div>
           <div class="topic-owner-info">
             <div class="topic-owner-title">{{ topic.title }}</div>
             <div class="topic-owner-meta">
@@ -114,7 +114,7 @@
         {% for p in proposals|slice:":5" %}
         <div class="proposal-card proposal-status-{{ p.status }}">
           <div class="proposal-card-header">
-            <div class="proposal-icon">{{ p.icon_html|safe }}</div>
+            <div class="proposal-icon">{{ p.safe_icon_html }}</div>
             <div class="proposal-card-meta">
               <div class="proposal-card-title">{{ p.title }}</div>
               <div class="proposal-card-date">{{ p.created_at|date:"M j, Y" }}</div>

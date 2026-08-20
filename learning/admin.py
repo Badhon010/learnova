@@ -43,7 +43,10 @@ class TopicAdmin(ModelAdmin):
     ordering = ['order', 'title']
     inlines = [ChapterInline]
     list_per_page = 20
-    readonly_fields = ['created_at', 'updated_at', 'submitted_for_review_at', 'reviewed_at', 'reviewed_by']
+    readonly_fields = [
+        'created_at', 'updated_at', 'submitted_for_review_at',
+        'reviewed_at', 'reviewed_by', 'icon_preview',
+    ]
 
     fieldsets = (
         (None, {
@@ -57,9 +60,10 @@ class TopicAdmin(ModelAdmin):
             ),
         }),
         ('Icon Styling', {
-            'fields': ('icon_html',),
+            'fields': ('icon_html', 'icon_preview'),
             'description': (
-                'Paste full HTML for the icon. Examples:<br>'
+                'Paste a Font Awesome snippet or inline SVG. Markup is sanitized and '
+                'the preview is constrained to the admin field size.<br>'
                 '<code>&lt;i class="fa-brands fa-python"&gt;&lt;/i&gt;</code><br>'
                 '<code>&lt;i class="fa-solid fa-database"&gt;&lt;/i&gt;</code>'
             ),
@@ -82,7 +86,13 @@ class TopicAdmin(ModelAdmin):
     @admin.display(description='Icon View')
     def icon_preview(self, obj):
         if obj.icon_html:
-            return format_html('<span style="font-size:1.25rem; color:#22C55E;">{}</span>', format_html(obj.icon_html))
+            return format_html(
+                '<span class="topic-icon topic-icon-admin" '
+                'style="display:inline-flex;align-items:center;justify-content:center;'
+                'width:2.5rem;height:2.5rem;max-width:100%;overflow:hidden;'
+                'font-size:1.5rem;color:#22C55E;line-height:1;">{}</span>',
+                obj.safe_icon_html,
+            )
         return "-"
 
 

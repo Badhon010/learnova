@@ -57,7 +57,7 @@
           <div class="review-card-main">
             <div class="review-card-info">
               <div class="review-card-title">
-                <span style="font-size:1.1rem;margin-right:6px;">{{ topic.icon_html|safe }}</span>
+                <span class="topic-icon topic-icon-queue">{{ topic.safe_icon_html }}</span>
                 {{ topic.title }}
               </div>
               <div class="review-card-meta">
@@ -106,7 +106,7 @@
           <div class="review-card-main">
             <div class="review-card-info">
               <div class="review-card-title">
-                <span style="font-size:1.2rem;margin-right:8px;">{{ p.icon_html|safe }}</span>
+                <span class="topic-icon topic-icon-queue">{{ p.safe_icon_html }}</span>
                 {{ p.title }}
               </div>
               <div class="review-card-meta">
@@ -177,7 +177,7 @@
           <div class="review-card-main">
             <div class="review-card-info">
               <div class="review-card-title">
-                <span style="margin-right:6px;">{{ topic.icon_html|safe }}</span>
+                <span class="topic-icon topic-icon-queue">{{ topic.safe_icon_html }}</span>
                 {{ topic.title }}
               </div>
               <div class="review-card-meta">

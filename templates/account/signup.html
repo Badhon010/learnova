@@ -1,0 +1,25 @@
+{% extends "account/base.html" %}
+{% block title %}Create Account | Learnova{% endblock %}
+{% block meta_description %}Create your Learnova account and start learning.{% endblock %}
+{% block account_content %}
+<div class="auth-header">
+  <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+  <h1>Create Account</h1>
+  <p>Verify your email to join Learnova.</p>
+</div>
+<form method="post" action="{% url 'account_signup' %}" class="auth-form" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-error-banner">{{ form.non_field_errors }}</div>{% endif %}
+  {% for field in form %}
+    <div class="form-group">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>
+      {{ field }}
+      {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+      {% if field.help_text %}<span class="form-hint">{{ field.help_text }}</span>{% endif %}
+    </div>
+  {% endfor %}
+  {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+  <button type="submit" class="btn btn-primary btn-full btn-lg">Create Account <i class="fa-solid fa-arrow-right"></i></button>
+</form>
+<div class="auth-footer">Already have an account? <a href="{% url 'account_login' %}">Sign in</a></div>
+{% endblock %}

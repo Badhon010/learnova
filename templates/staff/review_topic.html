@@ -42,7 +42,7 @@
         <div class="sidebar-card" style="margin-bottom:24px;">
           <h2 style="font-size:1.1rem;margin-bottom:12px;"><i class="fa-solid fa-layer-group"></i> Topic Overview</h2>
           <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
-            <div style="font-size:2rem;">{{ topic.icon_html|safe }}</div>
+            <div class="topic-icon topic-icon-review">{{ topic.safe_icon_html }}</div>
             <div>
               <div style="font-weight:600;font-size:1.05rem;">{{ topic.title }}</div>
               <div style="color:var(--text-secondary);font-size:.85rem;margin-top:4px;">{{ topic.description }}</div>

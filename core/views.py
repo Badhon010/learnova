@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.views.generic import TemplateView, FormView
 from django.shortcuts import render
@@ -12,6 +13,9 @@ from django.db.models import Count, Q
 
 from learning.models import Topic, Chapter, Lesson
 from .models import NewsletterSubscriber, ContactMessage
+
+
+logger = logging.getLogger(__name__)
 
 
 def _annotated_topics():
@@ -128,7 +132,7 @@ class ContactView(FormView):
                     fail_silently=False,
                 )
             except Exception:
-                pass
+                logger.exception('Contact email could not be sent for message %s', data['subject'])
         return render(
             self.request,
             self.template_name,
@@ -173,7 +177,7 @@ def newsletter_subscribe(request):
                 fail_silently=True,
             )
         except Exception:
-            pass
+            logger.exception('Newsletter welcome email could not be sent to %s', email)
 
     return JsonResponse({'ok': True, 'already': not created})
 

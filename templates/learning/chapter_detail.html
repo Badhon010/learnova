@@ -14,11 +14,23 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Topics", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}"},
-    {"@type": "ListItem", "position": 2, "name": "{{ topic.title|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{{ topic.get_absolute_url }}"},
-    {"@type": "ListItem", "position": 3, "name": "{{ chapter.title|escapejs }}"}
+  "@graph": [
+    {
+      "@type": "LearningResource",
+      "name": "{{ chapter.title|escapejs }}",
+      "description": "{{ chapter.get_meta_description|escapejs }}",
+      "isPartOf": {"@type": "Course", "name": "{{ topic.title|escapejs }}"},
+      "timeRequired": "PT{{ chapter.estimated_hours|floatformat:'0' }}H",
+      "dateModified": "{{ chapter.updated_at|date:'Y-m-d' }}"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Topics", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'topics' %}"},
+        {"@type": "ListItem", "position": 2, "name": "{{ topic.title|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{{ topic.get_absolute_url }}"},
+        {"@type": "ListItem", "position": 3, "name": "{{ chapter.title|escapejs }}"}
+      ]
+    }
   ]
 }
 </script>

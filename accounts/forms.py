@@ -51,6 +51,10 @@ class ProfileEditForm(forms.ModelForm):
             'github_url': forms.URLInput(attrs={'placeholder': 'https://github.com/yourusername'}),
             'twitter_url': forms.URLInput(attrs={'placeholder': 'https://twitter.com/yourusername'}),
             'linkedin_url': forms.URLInput(attrs={'placeholder': 'https://linkedin.com/in/yourusername'}),
+            'avatar': forms.ClearableFileInput(attrs={
+                'class': 'profile-file-input',
+                'accept': 'image/png,image/jpeg,image/webp',
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -78,6 +82,10 @@ class ChapterCreateForm(forms.Form):
         max_length=200,
         widget=forms.TextInput(attrs={'placeholder': 'Chapter title'}),
     )
+    slug = forms.SlugField(
+        max_length=200, required=False,
+        help_text='Optional SEO-friendly URL slug. Leave blank to generate it from the title.',
+    )
     description = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Brief description of what this chapter covers...'}),
     )
@@ -89,6 +97,16 @@ class ChapterCreateForm(forms.Form):
         min_value=0, initial=0,
         help_text='Display order (lower = shown first).',
     )
+    meta_title = forms.CharField(
+        max_length=60, required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Chapter title | Learnova'}),
+        help_text='Optional SEO title. Keep it under 60 characters.',
+    )
+    meta_description = forms.CharField(
+        max_length=160, required=False,
+        widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'A concise search-result description...'}),
+        help_text='Optional SEO description. Keep it under 160 characters.',
+    )
 
 
 
@@ -98,9 +116,23 @@ class LessonCreateForChapterForm(forms.Form):
         max_length=200,
         widget=forms.TextInput(attrs={'placeholder': 'Lesson title'}),
     )
+    slug = forms.SlugField(
+        max_length=200, required=False,
+        help_text='Optional SEO-friendly URL slug. Leave blank to generate it from the title.',
+    )
     summary = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Brief summary of what this lesson covers...'}),
         help_text='A short one-paragraph overview shown in listings.',
+    )
+    meta_title = forms.CharField(
+        max_length=60, required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Lesson title | Learnova'}),
+        help_text='Optional SEO title. Keep it under 60 characters.',
+    )
+    meta_description = forms.CharField(
+        max_length=160, required=False,
+        widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'A concise search-result description...'}),
+        help_text='Optional SEO description. Keep it under 160 characters.',
     )
     content = forms.CharField(
         widget=CKEditor5Widget(config_name='default'),
@@ -146,13 +178,33 @@ class TopicEditForm(forms.Form):
         widget=forms.TextInput(attrs={'placeholder': '<i class="fa-solid fa-brain"></i>'}),
         help_text='Optional Font Awesome icon snippet. Example: <code>&lt;i class="fa-solid fa-brain"&gt;&lt;/i&gt;</code>',
     )
+    meta_title = forms.CharField(
+        max_length=60, required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Topic title | Learnova'}),
+        help_text='Optional SEO title. Keep it under 60 characters.',
+    )
+    meta_description = forms.CharField(
+        max_length=160, required=False,
+        widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'A concise search-result description...'}),
+        help_text='Optional SEO description. Keep it under 160 characters.',
+    )
+    image = forms.ImageField(required=False, help_text='Optional topic cover image.')
+    image_alt = forms.CharField(
+        max_length=255, required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Describe the cover image'}),
+        help_text='Describe the image for accessibility and image search.',
+    )
 
 
 class LessonEditForm(forms.ModelForm):
     class Meta:
         from learning.models import Lesson
         model = Lesson
-        fields = ['title', 'summary', 'content', 'difficulty', 'video_url', 'reading_time', 'required_quiz_questions']
+        fields = [
+            'title', 'slug', 'summary', 'meta_title', 'meta_description',
+            'content', 'difficulty', 'video_url', 'reading_time',
+            'required_quiz_questions',
+        ]
         widgets = {
             'summary': forms.Textarea(attrs={'rows': 3}),
             'content': CKEditor5Widget(config_name='default'),

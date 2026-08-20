@@ -1,0 +1,18 @@
+{% extends "account/base.html" %}
+{% block title %}Email Settings | Learnova{% endblock %}
+{% block account_content %}
+<div class="auth-header"><h1>Email Settings</h1><p>Manage the email addresses connected to your account.</p></div>
+{% if emailaddresses %}
+  {% for emailaddress in emailaddresses %}
+    <div class="account-details-grid">
+      <span class="detail-value">{{ emailaddress.email }}</span>
+      <span class="form-hint">{% if emailaddress.primary %}Primary{% endif %} {% if emailaddress.verified %}Verified{% else %}Unverified{% endif %}</span>
+    </div>
+  {% endfor %}
+{% endif %}
+<form method="post" action="{% url 'account_email' %}" class="auth-form">
+  {% csrf_token %}
+  {% if form %}{{ form.as_p }}{% endif %}
+  <button type="submit" class="btn btn-primary">Update email</button>
+</form>
+{% endblock %}

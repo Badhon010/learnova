@@ -15,11 +15,14 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Article",
+  "@type": "TechArticle",
   "headline": "{{ lesson.title|escapejs }}",
   "description": "{{ lesson.summary|truncatechars:150|escapejs }}",
   "author": {"@type": "Organization", "name": "Learnova"},
   "publisher": {"@type": "Organization", "name": "Learnova"},
+  "isPartOf": {"@type": "Course", "name": "{{ topic.title|escapejs }}"},
+  "learningResourceType": "Lesson",
+  "timeRequired": "PT{{ lesson.reading_time }}M",
   "dateModified": "{{ lesson.updated_at|date:'Y-m-d' }}",
   "breadcrumb": {
     "@type": "BreadcrumbList",
@@ -257,7 +260,7 @@
               </span>
             </form>
             {% else %}
-            <p class="login-prompt"><a href="{% url 'login' %}?next={{ request.path }}">Sign in</a> to rate this lesson.</p>
+            <p class="login-prompt"><a href="{% url 'account_login' %}?next={{ request.path }}">Sign in</a> to rate this lesson.</p>
             {% endif %}
           </div>
         </div>
@@ -291,7 +294,7 @@
             </div>
           </form>
           {% else %}
-          <p class="login-prompt"><a href="{% url 'login' %}?next={{ request.path }}#comments">Sign in</a> to join the discussion.</p>
+          <p class="login-prompt"><a href="{% url 'account_login' %}?next={{ request.path }}#comments">Sign in</a> to join the discussion.</p>
           {% endif %}
 
           <div class="comments-list" id="commentsList">

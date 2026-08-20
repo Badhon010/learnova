@@ -70,7 +70,7 @@
         {% for topic in featured_topics %}
           <a href="{{ topic.get_absolute_url }}" class="topic-card">
             <div class="topic-card-icon" aria-hidden="true">
-              {{ topic.icon_html|safe }}
+              {{ topic.safe_icon_html }}
             </div>
             <div class="topic-card-body">
               <h3 class="topic-card-title">{{ topic.title }}</h3>

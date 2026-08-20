@@ -67,10 +67,10 @@
           <a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm" title="My Dashboard">
             <i class="fa-solid fa-user"></i> {{ user.username }}
           </a>
-          <a href="{% url 'logout' %}" class="btn btn-primary btn-sm">Sign Out</a>
+          <a href="{% url 'account_logout' %}" class="btn btn-primary btn-sm">Sign Out</a>
         {% else %}
-          <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Sign In</a>
-          <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Sign Up</a>
+          <a href="{% url 'account_login' %}" class="btn btn-outline btn-sm">Sign In</a>
+          <a href="{% url 'account_signup' %}" class="btn btn-primary btn-sm">Sign Up</a>
         {% endif %}
 
         <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">

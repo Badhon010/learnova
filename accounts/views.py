@@ -287,7 +287,7 @@ def create_chapter_view(request, slug):
         form = ChapterCreateForm(request.POST)
         if form.is_valid():
             title = form.cleaned_data['title']
-            base_slug = slugify(title)
+            base_slug = form.cleaned_data.get('slug') or slugify(title)
             ch_slug = base_slug
             counter = 1
             while Chapter.objects.filter(slug=ch_slug).exists():
@@ -299,6 +299,8 @@ def create_chapter_view(request, slug):
                 title=title,
                 slug=ch_slug,
                 description=form.cleaned_data['description'],
+                meta_title=form.cleaned_data.get('meta_title', ''),
+                meta_description=form.cleaned_data.get('meta_description', ''),
                 estimated_hours=form.cleaned_data['estimated_hours'],
                 order=form.cleaned_data['order'],
                 created_by=request.user,
@@ -335,7 +337,17 @@ def edit_chapter_view(request, chapter_pk):
         form = ChapterCreateForm(request.POST)
         if form.is_valid():
             chapter.title = form.cleaned_data['title']
+            requested_slug = form.cleaned_data.get('slug', '').strip()
+            if requested_slug and requested_slug != chapter.slug:
+                if Chapter.objects.filter(slug=requested_slug).exclude(pk=chapter.pk).exists():
+                    form.add_error('slug', 'That URL slug is already in use.')
+                    return render(request, 'accounts/create_chapter.html', {
+                        'form': form, 'topic': chapter.topic, 'chapter': chapter, 'editing': True,
+                    })
+                chapter.slug = requested_slug
             chapter.description = form.cleaned_data['description']
+            chapter.meta_title = form.cleaned_data.get('meta_title', '')
+            chapter.meta_description = form.cleaned_data.get('meta_description', '')
             chapter.estimated_hours = form.cleaned_data['estimated_hours']
             chapter.order = form.cleaned_data['order']
             chapter.save()
@@ -345,6 +357,9 @@ def edit_chapter_view(request, chapter_pk):
         form = ChapterCreateForm(initial={
             'title': chapter.title,
             'description': chapter.description,
+            'slug': chapter.slug,
+            'meta_title': chapter.meta_title,
+            'meta_description': chapter.meta_description,
             'estimated_hours': chapter.estimated_hours,
             'order': chapter.order,
         })
@@ -401,7 +416,7 @@ def create_lesson_for_chapter_view(request, chapter_pk):
         form = LessonCreateForChapterForm(request.POST)
         if form.is_valid():
             title = form.cleaned_data['title']
-            base_slug = slugify(title)
+            base_slug = form.cleaned_data.get('slug') or slugify(title)
             lesson_slug = base_slug
             if Lesson.objects.filter(slug=lesson_slug).exists():
                 lesson_slug = f'{base_slug}-{uuid.uuid4().hex[:6]}'
@@ -411,6 +426,8 @@ def create_lesson_for_chapter_view(request, chapter_pk):
                 title=title,
                 slug=lesson_slug,
                 summary=form.cleaned_data['summary'],
+                meta_title=form.cleaned_data.get('meta_title', ''),
+                meta_description=form.cleaned_data.get('meta_description', ''),
                 content=form.cleaned_data['content'],
                 difficulty=form.cleaned_data['difficulty'],
                 video_url=form.cleaned_data.get('video_url', ''),
@@ -471,12 +488,17 @@ def edit_topic_view(request, slug):
         return redirect('my_lessons')
 
     if request.method == 'POST':
-        form = TopicEditForm(request.POST)
+        form = TopicEditForm(request.POST, request.FILES)
         if form.is_valid():
             new_title = form.cleaned_data['title']
             topic.title = new_title
             topic.description = form.cleaned_data['description']
             topic.icon_html = form.cleaned_data.get('icon_html', '')
+            topic.meta_title = form.cleaned_data.get('meta_title', '')
+            topic.meta_description = form.cleaned_data.get('meta_description', '')
+            topic.image_alt = form.cleaned_data.get('image_alt', '')
+            if form.cleaned_data.get('image'):
+                topic.image = form.cleaned_data['image']
             topic.save()
             messages.success(request, f'Topic "{topic.title}" updated.')
             return redirect('manage_topic', slug=topic.slug)
@@ -485,6 +507,9 @@ def edit_topic_view(request, slug):
             'title': topic.title,
             'description': topic.description,
             'icon_html': topic.icon_html,
+            'meta_title': topic.meta_title,
+            'meta_description': topic.meta_description,
+            'image_alt': topic.image_alt,
         })
 
     return render(request, 'accounts/edit_topic.html', {

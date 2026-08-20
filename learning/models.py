@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django_ckeditor_5.fields import CKEditor5Field
 from django.utils import timezone
 from django.db.models import Avg
+from django.utils.safestring import mark_safe
+from .icon_utils import sanitize_icon_html
 
 
 # ── In-App Notifications ──────────────────────────────────────────────────────
@@ -114,6 +116,10 @@ class TopicProposal(models.Model):
 
     def __str__(self):
         return f'{self.title} ({self.status}) — {self.submitted_by.username}'
+
+    @property
+    def safe_icon_html(self):
+        return mark_safe(sanitize_icon_html(self.icon_html))
 
     def clean(self):
         from django.core.exceptions import ValidationError
@@ -242,6 +248,10 @@ class Topic(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def safe_icon_html(self):
+        return mark_safe(sanitize_icon_html(self.icon_html))
 
     def get_absolute_url(self):
         return reverse('topic_detail', kwargs={'slug': self.slug})

@@ -5,7 +5,9 @@
 {% block meta_description %}Browse all learning topics on Learnova. Find structured courses on Python, JavaScript, SQL, React, Git, and more.{% endblock %}
 
 {% block canonical %}
-<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
+{% if page_obj.has_previous %}<link rel="prev" href="?page={{ page_obj.previous_page_number }}" />{% endif %}
+{% if page_obj.has_next %}<link rel="next" href="?page={{ page_obj.next_page_number }}" />{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -66,7 +68,7 @@
         {% for topic in topics %}
           <a href="{{ topic.get_absolute_url }}" class="topic-card">
             <div class="topic-card-icon" aria-hidden="true">
-              {{ topic.icon_html|safe }}
+              {{ topic.safe_icon_html }}
             </div>
             <div class="topic-card-body">
               <h2 class="topic-card-title">{{ topic.title }}</h2>

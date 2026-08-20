@@ -34,7 +34,7 @@
           {% for p in proposals %}
           <div class="proposal-card proposal-status-{{ p.status }}">
             <div class="proposal-card-header">
-              <div class="proposal-icon">{{ p.icon_html|safe }}</div>
+              <div class="proposal-icon">{{ p.safe_icon_html }}</div>
               <div class="proposal-card-meta">
                 <div class="proposal-card-title">{{ p.title }}</div>
                 <div class="proposal-card-date">Submitted {{ p.created_at|date:"M j, Y" }}</div>

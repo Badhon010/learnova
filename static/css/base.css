@@ -1,3 +1,33 @@
+/* Icon snippets may be Font Awesome or inline SVG. Keep either bounded in
+   cards, contributor views, and the Unfold admin without distorting its ratio. */
+.topic-icon,
+.topic-card-icon,
+.topic-owner-icon,
+.topic-owner-icon-sm,
+.proposal-icon,
+.topic-icon-large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.topic-icon svg,
+.topic-card-icon svg,
+.topic-owner-icon svg,
+.topic-owner-icon-sm svg,
+.proposal-icon svg,
+.topic-icon-large svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  max-width: 100%;
+  max-height: 100%;
+  flex: 0 0 auto;
+  overflow: visible;
+}
 /* ============================================================
    Base — Variables, Reset, Layout, Typography, Buttons, Alerts
    ============================================================ */
